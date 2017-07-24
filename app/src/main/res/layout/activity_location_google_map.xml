@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="5dp">
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/color">
+            <TableRow>
+                <Button
+                    android:id="@+id/Information"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="Просмотр маршрута"
+                    android:layout_marginLeft="80dp"
+                    android:onClick="onClick"
+                    >
+                </Button>
+                <ImageButton
+                    android:id="@+id/Setting"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:onClick="onClick"
+                    android:layout_marginLeft="40dp"
+                    android:background="@mipmap/setting"
+                    >
+                </ImageButton>
+            </TableRow>
+        </TableLayout>
+        <fragment
+            android:id="@+id/map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            class="com.google.android.gms.maps.SupportMapFragment"/>
+    </LinearLayout>
+
+</RelativeLayout>

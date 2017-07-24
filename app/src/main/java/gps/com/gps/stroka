@@ -1,0 +1,21 @@
+  Notification.Builder builder = new Notification.Builder(getBaseContext());
+        Resources res = getBaseContext().getResources();
+        builder.setContentIntent(pendingIntent)
+                .setSmallIcon(R.drawable.ic_media_pause)
+                // большая картинка
+                .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.ic_media_pause))
+                //.setTicker(res.getString(R.string.warning)) // текст в строке состояния
+                .setTicker("GPSTracker")
+                .setWhen(System.currentTimeMillis())
+                .setAutoCancel(true)
+                //.setContentTitle(res.getString(R.string.notifytitle)) // Заголовок уведомления
+                .setContentTitle("Напоминание")
+                //.setContentText(res.getString(R.string.notifytext))
+                .setContentText("У вас запущен навигатор"); // Текст уведомления
+
+        Notification notification = builder.getNotification(); // до API 16
+        //Notification notification = builder.build();
+
+        NotificationManager notificationManager = (NotificationManager) getBaseContext()
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NOTIFY_ID, notification);
