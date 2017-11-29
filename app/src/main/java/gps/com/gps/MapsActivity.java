@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -42,6 +44,9 @@ import java.util.Calendar;
 import java.util.Date;
 
 
+/**
+ * Интерфейс приложения
+ */
 public class MapsActivity extends FragmentActivity implements OnClickListener{
 
     GoogleMap googleMap;
@@ -51,12 +56,25 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
     ImageButton img;
     // Declare a variable for the cluster manager.
     private ClusterManager<MyItem> mClusterManager;
+    public static final String APP_PREFERENCES = "settings";
+    /**
+     * Название параметра настроек
+     */
+    public static final String APP_PREFERENCES_METRES = "metres";
+    /**
+     * Название параметра настроек
+     */
+    public static final String APP_PREFERENCES_TIME = "time";
+    /**
+     *Хранилище, используемое приложениями для хранения своих настроек
+     */
+    private SharedPreferences sharedPrefs;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        sharedPrefs = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         dbHelper = new DBHelper(getApplicationContext());
         setContentView(R.layout.activity_location_google_map);
         Button btnInfo = (Button) findViewById(R.id.Information);
@@ -69,11 +87,19 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
         googleMap = fm.getMap();
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.setMyLocationEnabled(true);
-       // database = dbHelper.getWritableDatabase();
+        database = dbHelper.getWritableDatabase();
 
     }
 
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(dbHelper.countBD()==0)
+            img.setEnabled(false);
+        else
+            img.setEnabled(true);
+        startTracker();
+    }
 
     /**
      *
@@ -87,15 +113,19 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
         //используется для отправки пользователю разовых или повторяющихся сообщений в заданное время
         AlarmManager alarmManager = (AlarmManager) getBaseContext().getSystemService(Context.ALARM_SERVICE);
         //задаёт повторяющиеся сигнализации с фиксированным временным интервалом
+        int seconds = 120;
+        if(sharedPrefs.contains(APP_PREFERENCES_TIME)){
+            seconds = sharedPrefs.getInt(APP_PREFERENCES_TIME, 120);
+        }
         alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 //о прошествии указанного промежутка времени с момента загрузки выводит устройство
                 // из спящего режима и запускает ожидающее намерение. Используется системное время
                 SystemClock.elapsedRealtime(),
-                1 * 60000*2, // 60000 = 2 minute
+                1*10000*seconds, // 60000 = 2 minute
                 pendingIntent); //объект PendingIntent, определяющий действие, выполняемое при запуске сигнализации
 
-         if (gpsTrackerIntent!=null&&dbHelper.countBD()!=0)
-             setUpClusterer();
+        if (gpsTrackerIntent!=null&&dbHelper.countBD()!=0)
+            setUpClusterer();
 
     }
 
@@ -111,32 +141,22 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
 
 
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if(dbHelper.countBD()==0)
-            img.setEnabled(false);
-        else
-            img.setEnabled(true);
-        startTracker();
-
-    }
-
-
-
     private void setUpClusterer() {
-        if(dbHelper.countBD()!=0) {
-            Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_ID + "=" +
-                    dbHelper.countBD(), null);
-            zero.moveToFirst();
-            String lats = zero.getString(zero.getColumnIndex(DBHelper.KEY_LAT));
-            String lons = zero.getString(zero.getColumnIndex(DBHelper.KEY_LON));
+        Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_ID + "=" +
+                dbHelper.countBD(), null);
+        zero.moveToFirst();
+        String lats = zero.getString(zero.getColumnIndex(DBHelper.KEY_LAT));
+        String lons = zero.getString(zero.getColumnIndex(DBHelper.KEY_LON));
 
-            double latit = Double.parseDouble(lats);
-            double longit = Double.parseDouble(lons);
-            // Position the map.
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latit, longit), 10));
+        double latit = Double.parseDouble(lats);
+        double longit = Double.parseDouble(lons);
+        // Position the map.
+        int metres = 10;
+        if(sharedPrefs.contains(APP_PREFERENCES_METRES)){
+            metres = sharedPrefs.getInt(APP_PREFERENCES_METRES, 10);
         }
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latit, longit), metres));
+
 
         // Initialize the manager with the context and the map.
         // (Activity extends context, so we can pass 'this' in the constructor.)
@@ -152,43 +172,51 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
     }
 
     private void addItems() {
-         String DATE_KONTROL = new SimpleDateFormat("yyyy.MM.dd").format(System.currentTimeMillis());
+        String DATE_KONTROL = new SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis());
         // Add ten cluster items in close proximity, for purposes of this example.
-        int k=1;
+        long k=1;
+        Cursor user = database.query(DBHelper.TABLE,
+                new String[]{DBHelper.KEY_ID, DBHelper.KEY_DATE, DBHelper.KEY_LAT, DBHelper.KEY_LON},
+                 DBHelper.KEY_DATE+"=?", new String[]{DATE_KONTROL}, null, null,
+                DBHelper.KEY_DATE + " DESC");
 
-        while (k<=dbHelper.countBD()) {
-            Cursor user = database.query(DBHelper.TABLE,
-                    new String[]{DBHelper.KEY_ID, DBHelper.KEY_DATE, DBHelper.KEY_LAT, DBHelper.KEY_LON},
-                    DBHelper.KEY_ID + "=" +k+" and "+ DBHelper.KEY_DATE+"=?", new String[]{DATE_KONTROL}, null, null,
-                    DBHelper.KEY_DATE + " DESC, " + DBHelper.KEY_TIME + " DESC");
-            user.moveToFirst();
-            Double lat = user.getDouble(user.getColumnIndex(DBHelper.KEY_LAT));
-            Double lon = user.getDouble(user.getColumnIndex(DBHelper.KEY_LON));
+        while (user.moveToNext()) {
+            if((k%2)==1) {
+                Double lat = user.getDouble(user.getColumnIndex(DBHelper.KEY_LAT));
+                Double lon = user.getDouble(user.getColumnIndex(DBHelper.KEY_LON));
 
-            MyItem offsetItem = new MyItem(lat, lon);
-            mClusterManager.addItem(offsetItem);
-            k=k+2;
+                MyItem offsetItem = new MyItem(lat, lon);
+                mClusterManager.addItem(offsetItem);
+            }
+            k=k+1;
         }
     }
 
-    private void addMarker(int k, PolylineOptions line) {
-        Cursor user = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_ID + "=" + k, null);
-        user.moveToFirst();
-        Double lat = user.getDouble(user.getColumnIndex(DBHelper.KEY_LAT));
-        Double lon = user.getDouble(user.getColumnIndex(DBHelper.KEY_LON));
+    private void addMarker(long k, PolylineOptions line) {
+        Cursor zero = database.query(DBHelper.TABLE, new String[] { DBHelper.KEY_ID }, DBHelper.KEY_ID + "=?",
+                new String[] { String.valueOf(k) }, null, null, null, null);
 
-        mClusterManager = new ClusterManager<MyItem>(this, googleMap);
+//        if (cursor != null){
+//            cursor.moveToFirst();
+//        }
+//        Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_ID + "=" + k
+//                , null);
+        if(zero.moveToFirst()) {
 
-        // Point the map's listeners at the listeners implemented by the cluster
-        // manager.
-        googleMap.setOnCameraChangeListener(mClusterManager);
-        googleMap.setOnMarkerClickListener(mClusterManager);
-        MyItem offsetItem = new MyItem(lat, lon);
-        mClusterManager.addItem(offsetItem);
-        LatLng latLng = new LatLng(lat, lon);
-        line.add(latLng);
-        line.width(8f).color(Color.GREEN);
+            Double lat = zero.getDouble(zero.getColumnIndex(DBHelper.KEY_LAT));
+            Double lon = zero.getDouble(zero.getColumnIndex(DBHelper.KEY_LON));
+            mClusterManager = new ClusterManager<MyItem>(this, googleMap);
 
+            // Point the map's listeners at the listeners implemented by the cluster manager.
+            googleMap.setOnCameraChangeListener(mClusterManager);
+            googleMap.setOnMarkerClickListener(mClusterManager);
+            MyItem offsetItem = new MyItem(lat, lon);
+            mClusterManager.addItem(offsetItem);
+            LatLng latLng = new LatLng(lat, lon);
+            line.add(latLng);
+            line.width(8f).color(Color.GREEN);
+        }
+        zero.close();
     }
 
 
@@ -209,6 +237,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
                 break;
         }
     }
+
 
     @Override
     protected Dialog onCreateDialog(int id) {
@@ -235,7 +264,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
                 userInput1d.setText(null);
 
                 Calendar newCalendar=Calendar.getInstance(); // объект типа Calendar мы будем использовать для получения даты
-                final SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy.MM.dd"); // это строка нужна для дальнейшего преобразования даты в строку
+                final SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd"); // это строка нужна для дальнейшего преобразования даты в строку
                 //создаем объект типа DatePickerDialog и инициализируем его конструктор обработчиком события выбора даты и данными для даты по умолчанию
                 dateBirdayDatePicker=new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
                     // функция onDateSet обрабатывает шаг 2: отображает выбранные нами данные в элементе EditText
@@ -258,15 +287,12 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
                 },newCalendar.get(Calendar.YEAR),newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
                 dateBirdayDatePicker1.setTitle("До:");
 
-                getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
                 userInputd.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                     @Override
                     public void onFocusChange(View v, boolean hasFocus) {
                         if (hasFocus) {
                             dateBirdayDatePicker.show();
-                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
                         }
                     }
                 });
@@ -276,13 +302,9 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
                     public void onFocusChange(View v, boolean hasFocus) {
                         if (hasFocus) {
                             dateBirdayDatePicker1.show();
-                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
                         }
                     }
                 });
-                getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-
-
 
 
                 //Настраиваем сообщение в диалоговом окне:
@@ -312,13 +334,13 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
 
                                             try {
 
-                                                Date date1 = new SimpleDateFormat("yyyy.MM.dd").parse(l1);
-                                                Date date2 = new SimpleDateFormat("yyyy.MM.dd").parse(l2);
+                                                Date date1 = new SimpleDateFormat("yyyy-MM-dd").parse(l1);
+                                                Date date2 = new SimpleDateFormat("yyyy-MM-dd").parse(l2);
 
                                                 //Сравнение данных, правильно заданы ли даты
                                                 if(Math.ceil((date2.getTime() - date1.getTime()) / 1000 / 60 / 60 / 24) >= 0){
 
-                                                    toDate(date1,date2);
+                                                    toDate(l1,l2);
                                                     userInputd.setText(null);
                                                     userInput1d.setText(null);
 
@@ -364,39 +386,33 @@ public class MapsActivity extends FragmentActivity implements OnClickListener{
      * Выгрузка по дате
      * @throws IOException
      */
-    private void toDate(Date date1, Date date2) throws IOException {
+    private void toDate(String date1, String date2) throws IOException {
         database = dbHelper.getWritableDatabase();
         PolylineOptions line = new PolylineOptions();
 
-        try {
+        Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_DATE + " BETWEEN '" +
+                date1 + "' AND '" + date2 + "'" + " ORDER BY " + DBHelper.KEY_DATE + " DESC, "+DBHelper.KEY_TIME+" DESC", null);
 
-            Cursor zero = database.query(DBHelper.TABLE,
-                    new String[] {DBHelper.KEY_ID, DBHelper.KEY_DATE, DBHelper.KEY_TIME,DBHelper.KEY_LAT,DBHelper.KEY_LON},
-                    null,  null, null, null, DBHelper.KEY_DATE+" DESC, "+DBHelper.KEY_TIME+" DESC");
+        if (zero.moveToFirst()) {
+            do {
+                long id = zero.getLong(zero.getColumnIndex(DBHelper.KEY_ID));
+               // addMarker(id, line);
+                Double lat = zero.getDouble(zero.getColumnIndex(DBHelper.KEY_LAT));
+                Double lon = zero.getDouble(zero.getColumnIndex(DBHelper.KEY_LON));
+                mClusterManager = new ClusterManager<MyItem>(this, googleMap);
 
-            if (zero.moveToFirst()) {
-                do {
-                    String id = zero.getString(zero.getColumnIndex(DBHelper.KEY_ID));
-                    String data = zero.getString(zero.getColumnIndex(DBHelper.KEY_DATE));
-
-                    Date date_need = new SimpleDateFormat("yyyy.MM.dd").parse(data);
-
-                    //Сравнение, попадает ли в диапазон дат, если да, то выгружаем
-                    if (Math.ceil(date2.getTime() / 1000 / 60 / 60 / 24) >= Math.ceil(date_need.getTime() / 1000 / 60 / 60 / 24) &&
-                            Math.ceil(date1.getTime() / 1000 / 60 / 60 / 24) <= Math.ceil(date_need.getTime() / 1000 / 60 / 60 / 24)) {
-
-                        addMarker(Integer.parseInt(id), line);
-                    }
-                } while (zero.moveToNext());
-            }
-            zero.close();
-
-
-        } catch (ParseException e) {
-            e.printStackTrace();
+                // Point the map's listeners at the listeners implemented by the cluster manager.
+                googleMap.setOnCameraChangeListener(mClusterManager);
+                googleMap.setOnMarkerClickListener(mClusterManager);
+                MyItem offsetItem = new MyItem(lat, lon);
+                mClusterManager.addItem(offsetItem);
+                LatLng latLng = new LatLng(lat, lon);
+                line.add(latLng);
+                line.width(8f).color(Color.GREEN);
+            } while (zero.moveToNext());
         }
+
         googleMap.addPolyline(line);
-        database.close();
     }
 
     /**

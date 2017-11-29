@@ -1,19 +1,14 @@
 package gps.com.gps;
 
 import android.app.Service;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.IntentFilter;
 import android.location.Location;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
-import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -22,22 +17,10 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.ui.IconGenerator;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
 
 /**
- * Created by Ира on 18.06.2017.
+ * Служба для получения данных и занисения их в БД
  */
 public class LocationService extends Service implements
 //This callback will have a public function onConnected() which will be called whenever device is connected and disconnected.
@@ -56,13 +39,12 @@ public class LocationService extends Service implements
     DBHelper dbHelper;//Создание БД
 
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // if we are currently trying to get a location and the alarm manager has called this again,
         // no need to start processing a new location.
 
-            startTracking();
+        startTracking();
 
         return START_NOT_STICKY; //Этот режим используется в сервисах, которые запускаются для выполнения конкретных действий или команд
     }
@@ -81,6 +63,7 @@ public class LocationService extends Service implements
             }
         }
     }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -107,13 +90,15 @@ public class LocationService extends Service implements
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-                //требуемая точность 500 метров, поэтому мы можем отказаться от этой услуги
-                //onDestroy будет вызываться и останавливать наше местоположение
-                if (location.getAccuracy() < 500) {
-                    stopLocationUpdates();
-                }
-                dbHelper.createNewTable(location.getLatitude(), location.getLongitude());
-
+            //требуемая точность 500 метров, поэтому мы можем отказаться от этой услуги
+            //onDestroy будет вызываться и останавливать наше местоположение
+            if (location.getAccuracy() < 10) {
+                stopLocationUpdates();
+            } else {
+                dbHelper = new DBHelper(getApplicationContext());
+                dbHelper.createNewTable(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
+                        location.getProvider(), batteryLevel());
+            }
         }
 
     }
@@ -140,4 +125,12 @@ public class LocationService extends Service implements
             mGoogleApiClient.disconnect();
         }
     }
+    public String batteryLevel() {
+        Intent intent  = this.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        int    level   = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+        int    scale   = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+        int    percent = (level*100)/scale;
+        return String.valueOf(percent) + "%";
+    }
+
 }
