@@ -14,7 +14,7 @@
                 android:id="@+id/btnSettings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Точность"
+                android:text="@string/btnSetAccuracy"
                 android:layout_marginTop="7dp"
                 android:textSize="20sp"
                 android:onClick="onClick">
@@ -28,7 +28,7 @@
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Выгрузка данных"
+                android:text="@string/btnUploadData"
                 android:layout_marginTop="7dp"
                 android:textSize="20sp"
                 android:onClick="onClick">
@@ -45,8 +45,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
                 android:onClick="onClick"
-                android:text="Очищение базы данных"
-                android:textSize="20sp"></Button>
+                android:text="@string/btnClearDB"
+                android:textSize="20sp" />
         </TableRow>
     </TableLayout>
 </LinearLayout>

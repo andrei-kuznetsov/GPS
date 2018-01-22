@@ -15,19 +15,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="метры:"
+            android:text="@string/meters"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:textSize="25dp" />
+            android:textSize="25sp" />
         <EditText
             android:id="@+id/etMetres"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLength="4"
+            android:inputType="number"
             android:textSize="24sp" />
     </TableRow>
         <TableRow
-            android:id="@+id/tableRow1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp">
@@ -35,15 +35,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
-                android:text="секунды:"
+                android:text="@string/seconds"
                 android:textAlignment="center"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:textSize="25dp" />
+                android:textSize="25sp" />
             <EditText
                 android:id="@+id/etSeconds"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLength="4"
+                android:inputType="number"
                 android:textSize="24sp" />
         </TableRow>
     </TableLayout>
