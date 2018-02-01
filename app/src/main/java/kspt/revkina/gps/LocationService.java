@@ -31,7 +31,13 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    DBHelper dbHelper;
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        dbHelper = new DBHelper(getApplicationContext());
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -80,7 +86,6 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-                DBHelper dbHelper = new DBHelper(getApplicationContext());
                 dbHelper.createNewTable(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                         location.getTime(),location.getProvider(), batteryLevel());
         }
@@ -122,4 +127,9 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         return String.valueOf(percent) + "%";
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        dbHelper.close();
+    }
 }
