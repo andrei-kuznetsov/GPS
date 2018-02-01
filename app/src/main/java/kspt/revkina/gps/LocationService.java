@@ -40,7 +40,6 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     }
 
     private void startTracking() {
-
         if ( GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
 
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -81,13 +80,9 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-            if (location.getAccuracy() < 10) {
-                stopLocationUpdates();
-            } else {
                 DBHelper dbHelper = new DBHelper(getApplicationContext());
                 dbHelper.createNewTable(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                         location.getTime(),location.getProvider(), batteryLevel());
-            }
         }
 
     }
