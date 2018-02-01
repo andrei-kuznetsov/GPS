@@ -35,7 +35,7 @@ class DBHelper extends SQLiteOpenHelper {
 
         db.execSQL("create table " + TABLE + "(" + KEY_ID
                 + " integer primary key," + KEY_LAT + " real," + KEY_LON + " real," + KEY_ACC+ " real,"+KEY_PROV+ " text,"+
-                KEY_BAT+ " text,"+ KEY_DATE+" text,"+KEY_TIME + " text"+");");
+                KEY_BAT+ " text,"+ KEY_DATE+" text"+");");
 
 
 
@@ -55,24 +55,20 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    private ContentValues createContentValues(double lat, double lon, double acc, String prov, String bat) {
-        String dateKontrol = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(System.currentTimeMillis());
-
-        String timeKontrol = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(System.currentTimeMillis());
+    private ContentValues createContentValues(double lat, double lon, double acc,long time, String prov, String bat) {
         ContentValues values = new ContentValues();
         values.put(DBHelper.KEY_LAT, lat);
         values.put(DBHelper.KEY_LON, lon);
         values.put(DBHelper.KEY_ACC, acc);
         values.put(DBHelper.KEY_PROV, prov);
         values.put(DBHelper.KEY_BAT, bat);
-        values.put(KEY_DATE, dateKontrol);
-        values.put(KEY_TIME, timeKontrol);
+        values.put(KEY_DATE, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(time));
         return values;
     }
 
-    public void createNewTable(double lat, double lon, double acc,String prov, String bat) {
+    public void createNewTable(double lat, double lon, double acc, long time, String prov, String bat) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues initialValues = createContentValues(lat, lon, acc, prov, bat);
+        ContentValues initialValues = createContentValues(lat, lon, acc, time, prov, bat);
         db.insert(TABLE, null, initialValues);
         db.close();
     }

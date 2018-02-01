@@ -86,7 +86,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
             } else {
                 DBHelper dbHelper = new DBHelper(getApplicationContext());
                 dbHelper.createNewTable(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
-                        location.getProvider(), batteryLevel());
+                        location.getTime(),location.getProvider(), batteryLevel());
             }
         }
 
