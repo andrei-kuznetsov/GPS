@@ -86,7 +86,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-                dbHelper.createNewTable(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
+                dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                         location.getTime(),location.getProvider(), batteryLevel());
         }
 
