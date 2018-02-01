@@ -66,7 +66,7 @@ class DBHelper extends SQLiteOpenHelper {
         return values;
     }
 
-    public void createNewTable(double lat, double lon, double acc, long time, String prov, String bat) {
+    public void createNewNote(double lat, double lon, double acc, long time, String prov, String bat) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues initialValues = createContentValues(lat, lon, acc, time, prov, bat);
         db.insert(TABLE, null, initialValues);
