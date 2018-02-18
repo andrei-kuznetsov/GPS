@@ -1,27 +1,19 @@
 package kspt.revkina.gps;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.InputType;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.EditTextPreference;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.view.View.OnClickListener;
-import android.widget.EditText;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,93 +22,158 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Map;
+
 
 /**
  * Class, settings for working with the database
  */
-public class Setting extends Activity implements OnClickListener{
+public class Setting extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener,
+        View.OnClickListener {
+    SharedPreferences sharedPreferences;
+    String nameFile;
 
-    private DBHelper dbHelper;
-    private static final String APP_PREFERENCES = "settings";
-    private static final String APP_PREFERENCES_METRES = "metres";
-    private static final String APP_PREFERENCES_TIME = "time";
-    private SharedPreferences sharedPrefs;
-    private SharedPreferences.Editor editor;
-
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.setting);
-        sharedPrefs = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-        Button btnSave = (Button) findViewById(R.id.btnSave);
-        btnSave.setOnClickListener(this);
-
-        Button btnClear = (Button) findViewById(R.id.btnClear);
-        btnClear.setOnClickListener(this);
-        Button btnSettings = (Button) findViewById(R.id.btnSettings);
-        btnSettings.setOnClickListener(this);
-
-        dbHelper = new DBHelper(getApplicationContext());
-
-    }
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-                Intent intent = new Intent(this, MapsActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                finish();
-        }
-        return true;
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.pref_general);
+        EditTextPreference metersPref = (EditTextPreference)findPreference( "meters" );
+        metersPref.setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener()
+                {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference)
+                    {
+                        EditTextPreference editPref = (EditTextPreference)preference;
+                        editPref.getEditText().setSelection( editPref.getText().length() );
+                        return true;
+                    }
+                } );
+        EditTextPreference secondsPref = (EditTextPreference)findPreference( "seconds" );
+        secondsPref.setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener()
+                {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference)
+                    {
+                        EditTextPreference editPref = (EditTextPreference)preference;
+                        editPref.getEditText().setSelection( editPref.getText().length() );
+                        return true;
+                    }
+                } );
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        sharedPreferences = getPreferenceManager().getSharedPreferences();
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+
+        Map<String, ?> preferencesMap = sharedPreferences.getAll();
+
+        for (Map.Entry<String, ?> preferenceEntry : preferencesMap.entrySet()) {
+            if (preferenceEntry instanceof EditTextPreference) {
+                updateSummary((EditTextPreference) preferenceEntry);
+            }
+        }
+    }
+
+    @Override
+    public void onPause() {
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
+
+    private void updateSummary(EditTextPreference preference) {
+        preference.setSummary(preference.getText());
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Map<String, ?> preferencesMap = sharedPreferences.getAll();
+        Object changedPreference = preferencesMap.get(key);
+        if (preferencesMap.get(key) instanceof EditTextPreference) {
+            updateSummary((EditTextPreference) changedPreference);
+        }
+    }
+
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.btnSettings:
-                showDialog(0);
-                this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+            case R.id.button:
+                new Thread(
+                        new Runnable() {
+                            public void run() {
+                                try {
+                                    exportTheDB();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                ).start();
                 break;
-            case R.id.btnSave:
-                    try {
-                        exportTheDB();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                break;
-            case R.id.btnClear:
-                AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-                quitDialog.setMessage("Вы действительно хотите удалить все данные?");
-                quitDialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                quitDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dbHelper.deleteTable();
-                    }
-                });
-                quitDialog.show();
+            case R.id.buttonClear:
+                clearDialog();
                 break;
         }
-
     }
 
+    Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            Bundle bundle = msg.getData();
+            String fileName = bundle.getString("fileName");
+            AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
+            quitDialog.setTitle("Вывели файл");
+            quitDialog.setMessage(fileName);
+            quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            quitDialog.show();
+        }
+    };
+
+    private void clearDialog() {
+        AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
+        quitDialog.setMessage("Вы действительно хотите удалить все данные?");
+        quitDialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        quitDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                new Thread(
+                        new Runnable() {
+                            public void run() {
+                                DBHelper dbHelper = new DBHelper(getApplicationContext());
+                                dbHelper.deleteTable();
+                            }
+                        }
+                ).start();
+            }
+        });
+        quitDialog.show();
+    }
 
     private void exportTheDB() throws IOException {
-
+        Message msg = handler.obtainMessage();
         File file;
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy", Locale.getDefault());
-        String timeStampDB = sdf.format(cal.getTime());
-        SimpleDateFormat times = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-        String Time = times.format(cal.getTime());
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss", Locale.getDefault());
+        String timeStampDB = sdf.format(Calendar.getInstance().getTime());
+        DBHelper dbHelper = new DBHelper(getApplicationContext());
         SQLiteDatabase database = dbHelper.getWritableDatabase();
 
         String path = Environment.getExternalStorageDirectory().getPath() + "/GPS_Tracker";
-        timeStampDB=timeStampDB+"_"+Time;
 
         File filePath = new File(path);
         if (!filePath.exists()) {
@@ -126,7 +183,6 @@ public class Setting extends Activity implements OnClickListener{
 
         file = new File(path + "/" + timeStampDB + ".csv");
 
-
         if (file.exists())
             if (file.delete())
                 System.out.print("Delete repeat catalog");
@@ -134,110 +190,34 @@ public class Setting extends Activity implements OnClickListener{
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path + "/" + timeStampDB + ".csv", true), "Windows-1251"));
 
 
-        Cursor zero = database.query(DBHelper.TABLE,
-                null, null, null,
-                null, null, DBHelper.KEY_DATE + " DESC, " + DBHelper.KEY_TIME + " DESC");
-        writer.println("_ID"+ ";" +"Date"+ ";"+"Time"+ ";"+"Latitude"+ ";"+"Longitude" + ";"+"Accuracy"+ ";"+"Provider"+
+        Cursor cursor = database.query(DBHelper.TABLE, null, null, null, null, null, DBHelper.KEY_DATE + " DESC");
+        writer.println("_ID"+ ";" +"Date"+ ";"+"Latitude"+ ";"+"Longitude" + ";"+"Accuracy"+ ";"+"Provider"+
                 ";"+"BatteryLife");
 
-        if (zero.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             do {
-                String id = zero.getString(zero.getColumnIndex(DBHelper.KEY_ID));
-                String data = zero.getString(zero.getColumnIndex(DBHelper.KEY_DATE));
-                String time = zero.getString(zero.getColumnIndex(DBHelper.KEY_TIME));
-                String lat = zero.getString(zero.getColumnIndex(DBHelper.KEY_LAT));
-                String lon = zero.getString(zero.getColumnIndex(DBHelper.KEY_LON));
-                String acc = zero.getString(zero.getColumnIndex(DBHelper.KEY_ACC));
-                String bat = zero.getString(zero.getColumnIndex(DBHelper.KEY_BAT));
-                String prov = zero.getString(zero.getColumnIndex(DBHelper.KEY_PROV));
+                String id = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_ID));
+                String data = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_DATE));
+                String lat = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_LAT));
+                String lon = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_LON));
+                String acc = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_ACC));
+                String bat = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_BAT));
+                String prov = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_PROV));
 
-                writer.println(id + ";" + data + ";" + time + ";" + lat + ";" + lon + ";" + acc+ ";"+ prov+ ";" + bat);
-            } while (zero.moveToNext());
+                writer.println(id + ";" + data + ";" + lat + ";" + lon + ";" + acc+ ";"+ prov+ ";" + bat);
+            } while (cursor.moveToNext());
         }
 
-        zero.close();
+        cursor.close();
         writer.flush();
         writer.close();
         MediaScannerConnection.scanFile(this, new String[]{path+"/"+timeStampDB+".csv"}, null, null);
-        AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-        quitDialog.setMessage("Вывели файл:\n "+path+"/"+timeStampDB+".csv");
-        quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        quitDialog.show();
+        nameFile = path+"/"+timeStampDB+".csv";
         database.close();
+        Bundle bundle = new Bundle();
+        bundle.putString("fileName", path+"/"+timeStampDB+".csv");
+        msg.setData(bundle);
+        handler.sendMessage(msg);
     }
 
-
-    @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-            case 0:
-                final ViewGroup nullParent = null;
-                View view = LayoutInflater.from(this).inflate(R.layout.accuracy, nullParent);
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-                builder.setView(view);
-                int metre = 10;
-                int second = 120;
-                if(sharedPrefs.contains(APP_PREFERENCES_METRES)){
-                    metre = sharedPrefs.getInt(APP_PREFERENCES_METRES, 10);
-                }
-                if(sharedPrefs.contains(APP_PREFERENCES_TIME)){
-                    second = sharedPrefs.getInt(APP_PREFERENCES_TIME, 120);
-                }
-                final EditText metres = (EditText) view.findViewById(R.id.etMetres);
-                final EditText seconds = (EditText) view.findViewById(R.id.etSeconds);
-                metres.setInputType(InputType.TYPE_CLASS_NUMBER);
-                seconds.setInputType(InputType.TYPE_CLASS_NUMBER);
-                metres.setSelectAllOnFocus(true);
-                seconds.setSelectAllOnFocus(true);
-                metres.setText(String.valueOf(metre));
-                seconds.setText(String.valueOf(second));
-                builder.setTitle("Точность")
-                        .setCancelable(false)
-                        .setPositiveButton(R.string.change,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog,
-                                                        int id) {
-                                        String met =metres.getText().toString();
-                                        String sec =seconds.getText().toString();
-
-                                        if (met.isEmpty()||sec.isEmpty()) {
-                                            AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-                                            quitDialog.setMessage("Вы не заполнили все поля настроек. Новые настройки не сохранены.");
-                                            quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.cancel();
-                                                }
-                                            });
-                                            quitDialog.show();
-                                        } else {
-                                            editor = sharedPrefs.edit();
-                                            editor.putInt(APP_PREFERENCES_METRES, Integer.valueOf(met));
-                                            editor.putInt(APP_PREFERENCES_TIME, Integer.valueOf(sec));
-                                            editor.apply();
-                                        }
-
-                                    }
-                                })
-
-                        .setNegativeButton(android.R.string.cancel,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog,
-                                                        int id) {
-                                        dialog.cancel();
-                                    }
-                                }).create().show();
-                return null;
-            default:
-                return null;
-        }
-    }
 }

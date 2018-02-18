@@ -22,7 +22,6 @@ class DBHelper extends SQLiteOpenHelper {
     public static final String KEY_PROV = "provider";
     public static final String KEY_BAT = "battery";
     public static final String KEY_DATE = "date";
-    public static final String KEY_TIME = "time";
 
 
     public DBHelper(Context context) {

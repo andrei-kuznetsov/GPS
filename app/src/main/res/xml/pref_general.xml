@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="ЯЗЫК">
+        <ListPreference
+            android:key="language"
+            android:title="Язык"
+            android:summary="Устанавливает язык приложения"
+            android:entries="@array/language"
+            android:entryValues="@array/language_code"
+            android:defaultValue="1"
+            android:dialogTitle="Выберите язык" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="ТОЧНОСТЬ">
+        <SwitchPreference
+            android:key="enter"
+            android:title="Настройка"
+            android:summaryOff="Автоматическая"
+            android:summaryOn="Ручная" />
+        <EditTextPreference
+            android:key="meters"
+            android:title="@string/meters"
+            android:defaultValue="10"
+            android:inputType="number"
+            android:summary="Установка точности в метрах"
+            android:dependency="enter" />
+        <EditTextPreference
+            android:key="seconds"
+            android:title="@string/seconds"
+            android:defaultValue="120"
+            android:inputType="number"
+            android:summary="Установка точности получения данных в секундах"
+            android:dependency="enter" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="РАБОТА С БАЗОЙ ДАННЫХ">
+        <Preference
+            android:key="buttonupload"
+            android:title="Выгрузить базу данных"
+            android:widgetLayout="@layout/button"
+            />
+        <Preference
+            android:key="buttonclear"
+            android:title="Очистить базу данных"
+            android:widgetLayout="@layout/buttonclear"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>

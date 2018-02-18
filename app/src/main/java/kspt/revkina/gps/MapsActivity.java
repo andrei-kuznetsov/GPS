@@ -13,10 +13,16 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.location.Location;
+import android.media.MediaScannerConnection;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +32,8 @@ import android.widget.Button;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.location.FusedLocationProviderApi;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -38,7 +46,14 @@ import android.view.View.OnClickListener;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -49,55 +64,53 @@ import java.util.Locale;
 /**
  * Application interface
  */
-public class MapsActivity extends FragmentActivity implements OnClickListener, OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnClickListener,
+        OnMapReadyCallback {
 
     private GoogleMap googleMap;
     private SQLiteDatabase database;
     private DBHelper dbHelper;
     private ImageButton img;
     private ClusterManager<MyItem> mClusterManager;
-    private static final String APP_PREFERENCES = "settings";
-    private static final String APP_PREFERENCES_METRES = "metres";
-    private static final String APP_PREFERENCES_TIME = "time";
-    private SharedPreferences sharedPrefs;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sharedPrefs = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         dbHelper = new DBHelper(getApplicationContext());
         setContentView(R.layout.activity_location_google_map);
-        Button btnInfo = (Button) findViewById(R.id.Information);
+        Button btnInfo = (Button) findViewById(R.id.information);
         btnInfo.setOnClickListener(this);
-        img = (ImageButton) findViewById(R.id.Setting);
+        img = (ImageButton) findViewById(R.id.setting);
         img.setOnClickListener(this);
-
-        SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         fm.getMapAsync(this);
         database = dbHelper.getWritableDatabase();
-
     }
+
 
     @Override
     public void onMapReady(GoogleMap map) {
         googleMap = map;
         googleMap.getUiSettings().setZoomControlsEnabled(true);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        googleMap.setMyLocationEnabled(true);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if(dbHelper.countBD()==0)
-            img.setEnabled(false);
-        else
-            img.setEnabled(true);
         startTracker();
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            googleMap.setMyLocationEnabled(true);
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location Permission Needed")
+                    .setMessage("This app needs the Location permission, please accept to use location functionality")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ActivityCompat.requestPermissions(MapsActivity.this,
+                                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                        }
+                    })
+                    .create()
+                    .show();
+        }
     }
 
     private void startTracker() {
@@ -107,10 +120,8 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         Intent gpsTrackerIntent = new Intent(getBaseContext(), GPSTracker.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getBaseContext(), 0, gpsTrackerIntent, 0);
         AlarmManager alarmManager = (AlarmManager) getBaseContext().getSystemService(Context.ALARM_SERVICE);
-        int seconds = 120;
-        if(sharedPrefs.contains(APP_PREFERENCES_TIME)){
-            seconds = sharedPrefs.getInt(APP_PREFERENCES_TIME, 120);
-        }
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        int seconds = preferences.getInt("seconds", 120);
         alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 SystemClock.elapsedRealtime(),
                 10000 * seconds,
@@ -134,27 +145,25 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
 
 
     private void setupClusterer() {
-        Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_ID + "=" +
-                dbHelper.countBD(), null);
+        Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " order by " + DBHelper.KEY_ID + " limit 1", null);
         zero.moveToFirst();
 
-        double latitude = Double.parseDouble(zero.getString(zero.getColumnIndex(DBHelper.KEY_LAT)));
-        double longitude = Double.parseDouble(zero.getString(zero.getColumnIndex(DBHelper.KEY_LON)));
-        zero.close();
-        int metres = 10;
-        if(sharedPrefs.contains(APP_PREFERENCES_METRES)){
-            metres = sharedPrefs.getInt(APP_PREFERENCES_METRES, 10);
-        }
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), metres));
+        double latitude = zero.getDouble(zero.getColumnIndex(DBHelper.KEY_LAT));
+        double longitude = zero.getDouble(zero.getColumnIndex(DBHelper.KEY_LON));
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        int metres = preferences.getInt("meters", 10);
+        LatLng latLng = new LatLng(latitude, longitude);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, metres));
 
         mClusterManager = new ClusterManager<>(this, googleMap);
         googleMap.setOnCameraChangeListener(mClusterManager);
         googleMap.setOnMarkerClickListener(mClusterManager);
         addItems();
+        zero.close();
     }
 
     private void addItems() {
-        String dateKontrol = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(System.currentTimeMillis());
+        String dateKontrol = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(System.currentTimeMillis());
         long k=1;
         Cursor user = database.query(DBHelper.TABLE,
                 new String[]{DBHelper.KEY_ID, DBHelper.KEY_DATE, DBHelper.KEY_LAT, DBHelper.KEY_LON},
@@ -193,26 +202,22 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         zero.close();
     }
 
-
-
-
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.Information:
+            case R.id.information:
                 if (dbHelper.countBD() != 0)
                     showDialog(1);
                 else
                     show();
                 break;
-            case R.id.Setting:
+            case R.id.setting:
                 Intent intent = new Intent(this, Setting.class);
                 startActivity(intent);
                 break;
         }
     }
-
-
+    
     @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
@@ -354,7 +359,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         PolylineOptions line = new PolylineOptions();
 
         Cursor zero = database.rawQuery("select * from " + DBHelper.TABLE + " where " + DBHelper.KEY_DATE + " BETWEEN '" +
-                date1 + "' AND '" + date2 + "'" + " ORDER BY " + DBHelper.KEY_DATE + " DESC, "+DBHelper.KEY_TIME+" DESC", null);
+                date1 + "' AND '" + date2 + "'" + " ORDER BY " + DBHelper.KEY_DATE + " DESC", null);
 
         if (zero.moveToFirst()) {
             do {
