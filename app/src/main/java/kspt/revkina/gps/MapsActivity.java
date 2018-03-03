@@ -115,9 +115,11 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
         Intent gpsTrackerIntent = new Intent(getBaseContext(), GPSTracker.class);
         GPSTracker gpsTracker = new GPSTracker();
         gpsTracker.onReceive(getApplicationContext(), gpsTrackerIntent);
-        IntentFilter intentFilter = new IntentFilter(
-                "android.intent.action.MAIN");
+        IntentFilter intentFilter = new IntentFilter("android.intent.action.MAIN");
         this.registerReceiver(null, intentFilter);
+        if (dbHelper.countBD() != 0) {
+            userLocation.setupClaster(getApplicationContext(), googleMap); //HERE
+        }
     }
 
     private boolean isGooglePlayServicesAvailable() {
