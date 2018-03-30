@@ -2,19 +2,20 @@ package kspt.revkina.gps;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.view.View;
 import android.widget.ImageView;
-import android.view.View.OnClickListener;
 
 /**
  * Input screen for receiving settings
  */
-public class Main extends Activity implements OnClickListener{
+public class Main extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,10 +28,11 @@ public class Main extends Activity implements OnClickListener{
 
         ImageView ImageView= (ImageView) findViewById(R.id.ImageView);
         ImageView.setImageResource(R.drawable.gps);
-        getPermission();
-
     }
-    private void getPermission(){
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED&&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -38,12 +40,20 @@ public class Main extends Activity implements OnClickListener{
             Intent intent=new Intent(this, MapsActivity.class);
             startActivity(intent);
             finish();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location Permission Needed")
+                    .setMessage("This app needs the Location permission, please accept to use location functionality")
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ActivityCompat.requestPermissions(Main.this, new String[]{
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION}, 3);
+                        }
+                    })
+                    .create()
+                    .show();
         }
-    }
-
-
-    @Override
-    public void onClick(View v) {
-        getPermission();
     }
 }

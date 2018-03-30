@@ -41,6 +41,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -72,6 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
         img.setOnClickListener(this);
         SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         fm.getMapAsync(this);
+        startService(new Intent(this, LocationService.class));
     }
 
 
@@ -79,59 +81,16 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
     public void onMapReady(GoogleMap map) {
         googleMap = map;
         googleMap.getUiSettings().setZoomControlsEnabled(true);
+
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             googleMap.setMyLocationEnabled(true);
-            if (dbHelper.countBD()!=0) {
-                LatLng latLng = userLocation.getLastLocation(getApplicationContext());
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
-            }
-        } else {
-            new AlertDialog.Builder(this)
-                    .setTitle("Location Permission Needed")
-                    .setMessage("This app needs the Location permission, please accept to use location functionality")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            ActivityCompat.requestPermissions(MapsActivity.this,
-                                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                        }
-                    })
-                    .create()
-                    .show();
+        }
+        if (dbHelper.countBD()!=0) {
+            userLocation.setupClaster(getApplicationContext(), googleMap);
+            userLocation.getLastLocation(getApplicationContext(), googleMap);
         }
     }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startTracker();
-    }
-
-    private void startTracker() {
-        if (!isGooglePlayServicesAvailable()) {
-            return;
-        }
-        Intent gpsTrackerIntent = new Intent(getBaseContext(), GPSTracker.class);
-        GPSTracker gpsTracker = new GPSTracker();
-        gpsTracker.onReceive(getApplicationContext(), gpsTrackerIntent);
-        IntentFilter intentFilter = new IntentFilter("android.intent.action.MAIN");
-        this.registerReceiver(null, intentFilter);
-        if (dbHelper.countBD() != 0) {
-            userLocation.setupClaster(getApplicationContext(), googleMap); //HERE
-        }
-    }
-
-    private boolean isGooglePlayServicesAvailable() {
-        int status = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this);
-        if (ConnectionResult.SUCCESS == status) {
-            return true;
-        } else {
-            GoogleApiAvailability.getInstance().getErrorDialog(this, status, 0).show();
-            return false;
-        }
-    }
-
 
     @Override
     public void onClick(View v) {

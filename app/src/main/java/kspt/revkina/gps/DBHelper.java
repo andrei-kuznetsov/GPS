@@ -34,7 +34,7 @@ class DBHelper extends SQLiteOpenHelper {
 
         db.execSQL("create table " + TABLE + "(" + KEY_ID
                 + " integer primary key," + KEY_LAT + " real," + KEY_LON + " real," + KEY_ACC+ " real,"+KEY_PROV+ " text,"+
-                KEY_BAT+ " text,"+ KEY_DATE+" text"+");");
+                KEY_BAT+ " text,"+ KEY_DATE+" real"+");");
 
 
 
@@ -54,14 +54,14 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    private ContentValues createContentValues(double lat, double lon, double acc,long time, String prov, String bat) {
+    private ContentValues createContentValues(double lat, double lon, double acc, long time, String prov, String bat) {
         ContentValues values = new ContentValues();
         values.put(DBHelper.KEY_LAT, lat);
         values.put(DBHelper.KEY_LON, lon);
         values.put(DBHelper.KEY_ACC, acc);
         values.put(DBHelper.KEY_PROV, prov);
         values.put(DBHelper.KEY_BAT, bat);
-        values.put(KEY_DATE, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(time));
+        values.put(KEY_DATE, time);
         return values;
     }
 

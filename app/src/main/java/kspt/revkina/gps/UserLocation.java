@@ -9,41 +9,48 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.clustering.ClusterManager;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Class for get locations
  */
 class UserLocation {
 
-    public LatLng getLastLocation(Context context) {
+    public void getLastLocation(Context context, final GoogleMap googleMap) {
         DBHelper dbHelper = new DBHelper(context);
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         Cursor cursor = database.rawQuery("select * from " + DBHelper.TABLE + " order by " + DBHelper.KEY_ID + " limit 1", null);
         cursor.moveToFirst();
         double latitude = cursor.getDouble(cursor.getColumnIndex(DBHelper.KEY_LAT));
         double longitude = cursor.getDouble(cursor.getColumnIndex(DBHelper.KEY_LON));
-        LatLng latLng = new LatLng(latitude, longitude);
         cursor.close();
-        return latLng;
+        LatLng latLng = new LatLng(latitude, longitude);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
     }
 
-    public void setupClaster(Context context, GoogleMap googleMap) {
-        ClusterManager<MyItem> mClusterManager = new ClusterManager<>(context, googleMap);
+    public void setupClaster(final Context context, final GoogleMap googleMap) {
+        final ClusterManager<MyItem> mClusterManager = new ClusterManager<>(context, googleMap);
         googleMap.setOnCameraChangeListener(mClusterManager);
         googleMap.setOnMarkerClickListener(mClusterManager);
-        addItems(context, mClusterManager);
+        new Thread(
+                new Runnable() {
+                    public void run() {
+                        addItems(context, mClusterManager);
+                    }
+                }
+        ).start();
     }
 
     void addItems(Context context, ClusterManager<MyItem> mClusterManager) {
         DBHelper dbHelper = new DBHelper(context);
         SQLiteDatabase database = dbHelper.getWritableDatabase();
-        String dateKontrol = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(System.currentTimeMillis());
+        long currentMillis = System.currentTimeMillis();
+        long hoursInterval = 60 * 60 * 1000;
 
-        Cursor cursor = database.query(DBHelper.TABLE,
-                new String[]{DBHelper.KEY_ID, DBHelper.KEY_DATE, DBHelper.KEY_LAT, DBHelper.KEY_LON},
-                DBHelper.KEY_DATE+"=?", new String[]{dateKontrol}, null, null,
-                DBHelper.KEY_DATE + " DESC");
+        Cursor cursor = database.rawQuery("select * from " + DBHelper.TABLE +
+                " where (" + currentMillis + " - " + DBHelper.KEY_DATE + ")/(" + hoursInterval + ") < 24", null);
 
         while (cursor.moveToNext()) {
             double latitude = cursor.getDouble(cursor.getColumnIndex(DBHelper.KEY_LAT));
