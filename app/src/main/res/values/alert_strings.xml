@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="titlePermission">Требуется разрешение на местоположение</string>
+    <string name="messagePermission">Это приложение нуждается в разрешении на геолокацию, пожалуйста, соглашайтесь использовать функции местоположения</string>
+    <string name="messageEmptyBD">Вы еще не ходили по маршрутам!</string>
+    <string name="titleExportBD">Вывели файл</string>
+    <string name="messageClearBD">Вы действительно хотите удалить все данные?</string>
+</resources>

@@ -113,7 +113,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
      */
     private void alertEmptyBD(){
         AlertDialog.Builder quitDialog = new AlertDialog.Builder(MapsActivity.this);
-        quitDialog.setMessage("Вы еще не ходили по маршрутам!");
+        quitDialog.setMessage(R.string.messageEmptyBD);
         quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

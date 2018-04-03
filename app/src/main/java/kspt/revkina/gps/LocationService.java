@@ -3,11 +3,13 @@ package kspt.revkina.gps;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -28,6 +30,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     private static final long INTERVAL = 1000 * 60 * 2;
     private static final long FASTEST_INTERVAL = 1000 * 60;
+    SharedPreferences pref;
 
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
@@ -37,6 +40,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     public void onCreate() {
         super.onCreate();
         dbHelper = new DBHelper(getApplicationContext());
+        pref = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     @Override
@@ -86,8 +90,9 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-                dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
-                        location.getTime(),location.getProvider(), batteryLevel());
+            location.setAccuracy(pref.getInt("meters", 10));
+            dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
+                    location.getTime(), location.getProvider(), batteryLevel());
         }
 
     }
@@ -98,7 +103,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
      */
     private void createLocationRequest() {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(INTERVAL);
+        mLocationRequest.setInterval(pref.getLong("seconds", INTERVAL));
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }

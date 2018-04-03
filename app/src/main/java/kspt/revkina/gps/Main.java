@@ -42,8 +42,8 @@ public class Main extends Activity {
             finish();
         } else {
             new AlertDialog.Builder(this)
-                    .setTitle("Location Permission Needed")
-                    .setMessage("This app needs the Location permission, please accept to use location functionality")
+                    .setTitle(R.string.titlePermission)
+                    .setMessage(R.string.messagePermission)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {

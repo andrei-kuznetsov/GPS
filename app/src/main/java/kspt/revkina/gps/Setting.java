@@ -128,7 +128,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
             Bundle bundle = msg.getData();
             String fileName = bundle.getString("fileName");
             AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-            quitDialog.setTitle("Вывели файл");
+            quitDialog.setTitle(R.string.titleExportBD);
             quitDialog.setMessage(fileName);
             quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                 @Override
@@ -142,7 +142,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
 
     private void clearDialog() {
         AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-        quitDialog.setMessage("Вы действительно хотите удалить все данные?");
+        quitDialog.setMessage(R.string.messageClearBD);
         quitDialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

@@ -13,25 +13,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/color">
+
             <TableRow>
+
                 <Button
                     android:id="@+id/information"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:text="@string/btnViewRoute"
-                    android:layout_marginLeft="80dp"
+                    android:layout_marginRight="20dp"
                     android:onClick="onClick"
-                    >
-                </Button>
+                    android:text="@string/btnViewRoute"></Button>
+
                 <ImageButton
-                    tools:ignore="ContentDescription"
                     android:id="@+id/setting"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:onClick="onClick"
-                    android:layout_marginLeft="40dp"
+                    android:layout_marginRight="20dp"
                     android:background="@mipmap/setting"
-                    />
+                    android:onClick="onClick"
+                    tools:ignore="ContentDescription" />
             </TableRow>
         </TableLayout>
         <fragment

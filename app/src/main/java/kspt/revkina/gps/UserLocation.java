@@ -21,7 +21,7 @@ class UserLocation {
     public void getLastLocation(Context context, final GoogleMap googleMap) {
         DBHelper dbHelper = new DBHelper(context);
         SQLiteDatabase database = dbHelper.getWritableDatabase();
-        Cursor cursor = database.rawQuery("select * from " + DBHelper.TABLE + " order by " + DBHelper.KEY_ID + " limit 1", null);
+        Cursor cursor = database.rawQuery("select * from " + DBHelper.TABLE + " order by " + DBHelper.KEY_ID + " DESC limit 1", null);
         cursor.moveToFirst();
         double latitude = cursor.getDouble(cursor.getColumnIndex(DBHelper.KEY_LAT));
         double longitude = cursor.getDouble(cursor.getColumnIndex(DBHelper.KEY_LON));

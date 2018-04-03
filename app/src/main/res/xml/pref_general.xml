@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="ТОЧНОСТЬ">
+        android:title="@string/titleAccuracy">
         <SwitchPreference
             android:key="enter"
-            android:title="Настройка"
-            android:summaryOff="Автоматическая"
-            android:summaryOn="Ручная" />
+            android:title="@string/titleSwitchPreference"
+            android:summaryOff="@string/summaryOff"
+            android:summaryOn="@string/summaryOn" />
         <EditTextPreference
             android:key="meters"
             android:title="@string/meters"
             android:defaultValue="10"
             android:inputType="number"
-            android:summary="Установка точности в метрах"
+            android:summary="@string/summaryEditMeters"
             android:dependency="enter" />
         <EditTextPreference
             android:key="seconds"
             android:title="@string/seconds"
             android:defaultValue="120"
             android:inputType="number"
-            android:summary="Установка точности получения данных в секундах"
+            android:summary="@string/summaryEditSeconds"
             android:dependency="enter" />
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="РАБОТА С БАЗОЙ ДАННЫХ">
+        android:title="@string/titleWorkWithDB">
         <Preference
             android:key="buttonupload"
-            android:title="Выгрузить базу данных"
+            android:title="@string/uploadData"
             android:widgetLayout="@layout/button"
             />
         <Preference
             android:key="buttonclear"
-            android:title="Очистить базу данных"
+            android:title="@string/clearDB"
             android:widgetLayout="@layout/buttonclear"
             />
     </PreferenceCategory>
