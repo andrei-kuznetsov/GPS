@@ -28,7 +28,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
-    private static final long INTERVAL = 1000 * 60 * 2;
+    private static final long INTERVAL = 1000 * 60;
     private static final long FASTEST_INTERVAL = 1000 * 60;
     SharedPreferences pref;
 
@@ -90,7 +90,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-            location.setAccuracy(pref.getInt("meters", 10));
+            location.setAccuracy(Integer.parseInt(pref.getString("seconds", "10")));
             dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                     location.getTime(), location.getProvider(), batteryLevel());
         }
@@ -103,7 +103,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
      */
     private void createLocationRequest() {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(pref.getLong("seconds", INTERVAL));
+        mLocationRequest.setInterval(Long.parseLong(pref.getString("seconds", "120"))*INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }

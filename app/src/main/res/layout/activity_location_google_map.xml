@@ -21,6 +21,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginRight="20dp"
+                    android:layout_marginLeft="80dp"
                     android:onClick="onClick"
                     android:text="@string/btnViewRoute"></Button>
 
@@ -29,6 +30,7 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:layout_marginRight="20dp"
+                    android:layout_marginLeft="30dp"
                     android:background="@mipmap/setting"
                     android:onClick="onClick"
                     tools:ignore="ContentDescription" />
