@@ -2,6 +2,7 @@ package kspt.revkina.gps;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,6 +14,7 @@ import android.os.Message;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.SwitchPreference;
 import android.view.View;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,6 +23,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
@@ -32,6 +35,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
         View.OnClickListener {
     SharedPreferences sharedPreferences;
     String nameFile;
+    private LocationService locationService = new LocationService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -77,6 +81,13 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
             if (preferenceEntry instanceof EditTextPreference) {
                 updateSummary((EditTextPreference) preferenceEntry);
             }
+        }
+        SwitchPreference enter = (SwitchPreference) findPreference("enter");
+        if (enter.getSwitchTextOn().equals(R.string.summaryOn)) {
+            locationService.updateLocationRequest(Long.parseLong(sharedPreferences.getString("seconds", "120")),
+                    Float.parseFloat(sharedPreferences.getString("meters", "10")));
+        } else {
+            startService(new Intent(this, LocationService.class));
         }
     }
 
@@ -172,6 +183,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
         String timeStampDB = sdf.format(Calendar.getInstance().getTime());
         DBHelper dbHelper = new DBHelper(getApplicationContext());
         SQLiteDatabase database = dbHelper.getWritableDatabase();
+        long count = dbHelper.countBD();
 
         String path = Environment.getExternalStorageDirectory().getPath() + "/GPS_Tracker";
 
@@ -192,19 +204,33 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
 
         Cursor cursor = database.query(DBHelper.TABLE, null, null, null, null, null, DBHelper.KEY_DATE + " DESC");
         writer.println("_ID"+ ";" +"Date"+ ";"+"Latitude"+ ";"+"Longitude" + ";"+"Accuracy"+ ";"+"Provider"+
-                ";"+"BatteryLife");
+                ";"+"BatteryLife"+";"+"Difference");
 
         if (cursor.moveToFirst()) {
             do {
                 String id = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_ID));
-                String data = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_DATE));
+                String idSecond = "";
+                long different = 0;
+                Long dataD = cursor.getLong(cursor.getColumnIndex(DBHelper.KEY_DATE));
+                if (Long.parseLong(id) < dbHelper.countBD()) {
+                    long second = Long.parseLong(id)+1;
+                    idSecond = String.valueOf(second);
+                    Cursor cursor2 = database.rawQuery("select * from " + DBHelper.TABLE + " where " + idSecond + " = " +
+                            DBHelper.KEY_ID, null);
+                    cursor2.moveToFirst();
+                    long dataSecond =  cursor2.getLong(cursor2.getColumnIndex(DBHelper.KEY_DATE));
+                    different = (dataSecond - dataD) / 1000L;
+                }
+
+                Date netDate = (new Date(dataD));
+                String data = sdf.format(netDate);
                 String lat = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_LAT));
                 String lon = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_LON));
                 String acc = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_ACC));
                 String bat = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_BAT));
                 String prov = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_PROV));
 
-                writer.println(id + ";" + data + ";" + lat + ";" + lon + ";" + acc+ ";"+ prov+ ";" + bat);
+                writer.println(id + ";" + data + ";" + lat + ";" + lon + ";" + acc+ ";"+ prov+ ";" + bat +";"+ different);
             } while (cursor.moveToNext());
         }
 
