@@ -53,9 +53,9 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
         dbHelper = new DBHelper(getApplicationContext());
         userLocation = new UserLocation();
         setContentView(R.layout.activity_location_google_map);
-        Button btnInfo = (Button) findViewById(R.id.information);
+        Button btnInfo = findViewById(R.id.information);
         btnInfo.setOnClickListener(this);
-        img = (ImageButton) findViewById(R.id.setting);
+        img = findViewById(R.id.setting);
         img.setOnClickListener(this);
         SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         fm.getMapAsync(this);
@@ -82,7 +82,15 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
         switch (v.getId()) {
             case R.id.information:
                 if (dbHelper.countBD() == 0)
-                    alertEmptyBD();
+                    new AlertDialog.Builder(MapsActivity.this)
+                            .setMessage(R.string.messageEmptyBD)
+                            .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+                                }
+                            }).show();
                 else
                     Toast.makeText(getApplicationContext(),"Count = "+dbHelper.countBD(), Toast.LENGTH_SHORT).show();
                 break;
@@ -91,21 +99,5 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
                 startActivity(intent);
                 break;
         }
-    }
-
-    /**
-     * Dialogue, whether the base is empty
-     */
-    private void alertEmptyBD(){
-        AlertDialog.Builder quitDialog = new AlertDialog.Builder(MapsActivity.this);
-        quitDialog.setMessage(R.string.messageEmptyBD);
-        quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-                getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-            }
-        });
-        quitDialog.show();
     }
 }

@@ -60,7 +60,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         super.onCreate();
         dbHelper = new DBHelper(getApplicationContext());
         pref = PreferenceManager.getDefaultSharedPreferences(this);
-        meters = Float.parseFloat(pref.getString("meters", "10"));
+        meters = Float.parseFloat(pref.getString(getString(R.string.meters), "10"));
         startService(new Intent(this, TransitionIntentService.class));
 
         activityRecognitionClient = ActivityRecognition.getClient(getApplicationContext());
@@ -133,7 +133,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
      */
     private void createLocationRequest() {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(Long.parseLong(pref.getString("seconds", "120"))*INTERVAL);
+        mLocationRequest.setInterval(Long.parseLong(pref.getString(getString(R.string.seconds), "120"))*INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
@@ -146,9 +146,11 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mGoogleApiClient, mLocationRequest, this);
         if (pref.getBoolean("enter", true)) {
-            deregisterHandler();
-        } else {
-            requestActivityTransitionUpdates();
+            if (pref.getBoolean("active_auto", false)) {
+                deregisterActivityTransitionUpdates();
+            } else {
+                requestActivityTransitionUpdates();
+            }
         }
     }
 
@@ -171,47 +173,37 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     public void onDestroy() {
         super.onDestroy();
         dbHelper.close();
-        deregisterHandler();
+        deregisterActivityTransitionUpdates();
     }
 
-    public void deregisterHandler() {
+    private void deregisterActivityTransitionUpdates() {
         Task<Void> task = activityRecognitionClient.removeActivityTransitionUpdates(transitionPendingIntent);
         task.addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 transitionPendingIntent.cancel();
-                Toast.makeText(getApplicationContext(), "Remove Activity Transition Successfully", Toast.LENGTH_LONG).show();
             }
         });
 
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(getApplicationContext(), "Remove Activity Transition Failed", Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
         });
     }
 
-    public void requestActivityTransitionUpdates() {
+    private void requestActivityTransitionUpdates() {
         ListTransition listTransition = new ListTransition();
         ActivityTransitionRequest request = listTransition.buildTransitionRequest();
 
         Task<Void> task = activityRecognitionClient.requestActivityTransitionUpdates(request,
                 transitionPendingIntent);
 
-        task.addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                Toast.makeText(getApplicationContext(), "Transition update set up", Toast.LENGTH_LONG).show();
-            }
-        });
-
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.e("taskTransitionFail", e.getMessage());
-                Toast.makeText(getApplicationContext(), "Transition update Failed to set up" + e.getMessage(), Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
         });

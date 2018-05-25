@@ -10,9 +10,8 @@ import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.SwitchPreference;
 import android.view.View;
@@ -25,14 +24,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 
 
 /**
  * Class, settings for working with the database
  */
-public class Setting extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener,
-        View.OnClickListener {
+public class Setting extends PreferenceActivity implements View.OnClickListener {
     SharedPreferences sharedPreferences;
     String nameFile;
     private LocationService locationService = new LocationService();
@@ -42,74 +39,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
     {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_general);
-        EditTextPreference metersPref = (EditTextPreference)findPreference( "meters" );
-        metersPref.setOnPreferenceClickListener(
-                new Preference.OnPreferenceClickListener()
-                {
-                    @Override
-                    public boolean onPreferenceClick(Preference preference)
-                    {
-                        EditTextPreference editPref = (EditTextPreference)preference;
-                        editPref.getEditText().setSelection( editPref.getText().length() );
-                        return true;
-                    }
-                } );
-        EditTextPreference secondsPref = (EditTextPreference)findPreference( "seconds" );
-        secondsPref.setOnPreferenceClickListener(
-                new Preference.OnPreferenceClickListener()
-                {
-                    @Override
-                    public boolean onPreferenceClick(Preference preference)
-                    {
-                        EditTextPreference editPref = (EditTextPreference)preference;
-                        editPref.getEditText().setSelection( editPref.getText().length() );
-                        return true;
-                    }
-                } );
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        sharedPreferences = getPreferenceManager().getSharedPreferences();
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-
-        Map<String, ?> preferencesMap = sharedPreferences.getAll();
-
-        for (Map.Entry<String, ?> preferenceEntry : preferencesMap.entrySet()) {
-            if (preferenceEntry instanceof EditTextPreference) {
-                updateSummary((EditTextPreference) preferenceEntry);
-            }
-        }
-        SwitchPreference enter = (SwitchPreference) findPreference("enter");
-        if (enter.getSwitchTextOn().equals(R.string.summaryOn)) {
-            locationService.updateLocationRequest(Long.parseLong(sharedPreferences.getString("seconds", "120")),
-                    Float.parseFloat(sharedPreferences.getString("meters", "10")));
-        } else {
-            startService(new Intent(this, LocationService.class));
-        }
-    }
-
-    @Override
-    public void onPause() {
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-        super.onPause();
-    }
-
-    private void updateSummary(EditTextPreference preference) {
-        preference.setSummary(preference.getText());
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Map<String, ?> preferencesMap = sharedPreferences.getAll();
-        Object changedPreference = preferencesMap.get(key);
-        if (preferencesMap.get(key) instanceof EditTextPreference) {
-            updateSummary((EditTextPreference) changedPreference);
-        }
-    }
-
 
     @Override
     public void onClick(View v) {
@@ -130,10 +60,20 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
             case R.id.buttonClear:
                 clearDialog();
                 break;
+            case R.id.enter:
+                SwitchPreference enter = (SwitchPreference) findPreference("enter");
+                if (enter.getSwitchTextOn().equals(R.string.summaryOn)) {
+                    locationService.updateLocationRequest(
+                            Long.parseLong(sharedPreferences.getString(getString(R.string.seconds), "120")),
+                            Float.parseFloat(sharedPreferences.getString(getString(R.string.meters), "10")));
+                } else {
+                    startService(new Intent(this, LocationService.class));
+                }
+                break;
         }
     }
 
-    Handler handler = new Handler(){
+    private Handler handler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(Message msg) {
             Bundle bundle = msg.getData();
@@ -152,15 +92,15 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
     };
 
     private void clearDialog() {
-        AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-        quitDialog.setMessage(R.string.messageClearBD);
-        quitDialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(Setting.this)
+            .setMessage(R.string.messageClearBD)
+            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
-            }
-        });
-        quitDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+              }
+        })
+            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 new Thread(
@@ -172,8 +112,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
                         }
                 ).start();
             }
-        });
-        quitDialog.show();
+        }).show();
     }
 
     private void exportTheDB() throws IOException {
@@ -183,7 +122,6 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
         String timeStampDB = sdf.format(Calendar.getInstance().getTime());
         DBHelper dbHelper = new DBHelper(getApplicationContext());
         SQLiteDatabase database = dbHelper.getWritableDatabase();
-        long count = dbHelper.countBD();
 
         String path = Environment.getExternalStorageDirectory().getPath() + "/GPS_Tracker";
 
@@ -245,5 +183,4 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
         msg.setData(bundle);
         handler.sendMessage(msg);
     }
-
 }

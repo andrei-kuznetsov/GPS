@@ -3,7 +3,8 @@ package kspt.revkina.gps;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.widget.Toast;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.google.android.gms.location.ActivityTransitionEvent;
 import com.google.android.gms.location.ActivityTransitionResult;
@@ -16,28 +17,33 @@ public class TransitionIntentService extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (ActivityTransitionResult.hasResult(intent)) {
             ActivityTransitionResult result = ActivityTransitionResult.extractResult(intent);
+            SharedPreferences  pref = PreferenceManager.getDefaultSharedPreferences(context);
             for (ActivityTransitionEvent event : result.getTransitionEvents()) {
                 switch (event.getActivityType()){
                     case DetectedActivity.IN_VEHICLE:
-                        locationService.updateLocationRequest(500, 1000);
+                        locationService.updateLocationRequest(Long.parseLong(pref.getString("vehicle_seconds", "500")),
+                                Float.parseFloat(pref.getString("vehicle_meters", "1000")));
                         break;
                     case DetectedActivity.ON_BICYCLE:
-                        locationService.updateLocationRequest(500, 500);
+                        locationService.updateLocationRequest(Long.parseLong(pref.getString("bicycle_seconds", "500")),
+                                Float.parseFloat(pref.getString("bicycle_meters", "500")));
                         break;
                     case DetectedActivity.STILL:
-                        locationService.updateLocationRequest(1000, 1000);
+                        locationService.updateLocationRequest(Long.parseLong(pref.getString("still_seconds", "1000")),
+                                Float.parseFloat(pref.getString("still_meters", "1000")));
                         break;
                     case DetectedActivity.WALKING:
-                        locationService.updateLocationRequest(120, 10);
+                        locationService.updateLocationRequest(Long.parseLong(pref.getString("walking_seconds", "120")),
+                                Float.parseFloat(pref.getString("walking_meters", "10")));
                         break;
                     case DetectedActivity.RUNNING:
-                        locationService.updateLocationRequest(60, 100);
+                        locationService.updateLocationRequest(Long.parseLong(pref.getString("running_seconds", "60")),
+                                Float.parseFloat(pref.getString("running_meters", "100")));
                         break;
                         default:
                             locationService.updateLocationRequest(120, 10);
                             break;
                 }
-                Toast.makeText(context, event.getTransitionType() + "-" + event.getActivityType(), Toast.LENGTH_LONG).show();
             }
         }
     }

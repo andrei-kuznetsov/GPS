@@ -35,17 +35,12 @@ class DBHelper extends SQLiteOpenHelper {
         db.execSQL("create table " + TABLE + "(" + KEY_ID
                 + " integer primary key," + KEY_LAT + " real," + KEY_LON + " real," + KEY_ACC+ " real,"+KEY_PROV+ " text,"+
                 KEY_BAT+ " text,"+ KEY_DATE+" real"+");");
-
-
-
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("drop table if exists " + TABLE);
-
         onCreate(db);
-
     }
 
     public void deleteTable() {
