@@ -1,48 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="ЯЗЫК">
-        <ListPreference
-            android:key="language"
-            android:title="Язык"
-            android:summary="Устанавливает язык приложения"
-            android:entries="@array/language"
-            android:entryValues="@array/language_code"
-            android:defaultValue="1"
-            android:dialogTitle="Выберите язык" />
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:title="ТОЧНОСТЬ">
+        android:title="@string/titleAccuracy">
         <SwitchPreference
+            android:id="@+id/enter"
             android:key="enter"
-            android:title="Настройка"
-            android:summaryOff="Автоматическая"
-            android:summaryOn="Ручная" />
+            android:onClick="onClick"
+            android:title="@string/titleSwitchPreference"
+            android:summaryOff="@string/summaryOff"
+            android:summaryOn="@string/summaryOn" />
         <EditTextPreference
             android:key="meters"
             android:title="@string/meters"
             android:defaultValue="10"
             android:inputType="number"
-            android:summary="Установка точности в метрах"
+            android:summary="@string/summaryEditMeters"
             android:dependency="enter" />
         <EditTextPreference
             android:key="seconds"
             android:title="@string/seconds"
             android:defaultValue="120"
             android:inputType="number"
-            android:summary="Установка точности получения данных в секундах"
+            android:summary="@string/summaryEditSeconds"
             android:dependency="enter" />
+        <PreferenceScreen
+            android:title="Настройка автоматического режима"
+            android:summary="Установка одно из возможных сценириев">
+
+            <CheckBoxPreference
+                android:key="active_auto"
+                android:title="Тип активности"
+                android:defaultValue="true"/>
+                <PreferenceScreen
+                    android:key="switch_enter_screen"
+                    android:dependency="active_auto"
+                    android:title="Настройка типов активности">
+                    <PreferenceCategory
+                        android:title="WALKING">
+                        <EditTextPreference
+                            android:key="walking_meters"
+                            android:title="@string/meters"
+                            android:defaultValue="10"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditMeters" />
+                        <EditTextPreference
+                            android:key="walking_seconds"
+                            android:title="@string/seconds"
+                            android:defaultValue="120"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditSeconds" />
+                    </PreferenceCategory>
+                    <PreferenceCategory
+                        android:title="STILL">
+                        <EditTextPreference
+                            android:key="still_meters"
+                            android:title="@string/meters"
+                            android:defaultValue="1000"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditMeters" />
+                        <EditTextPreference
+                            android:key="still_seconds"
+                            android:title="@string/seconds"
+                            android:defaultValue="1000"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditSeconds" />
+                    </PreferenceCategory>
+                    <PreferenceCategory
+                        android:title="ON_BICYCLE">
+                        <EditTextPreference
+                            android:key="bicycle_meters"
+                            android:title="@string/meters"
+                            android:defaultValue="500"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditMeters" />
+                        <EditTextPreference
+                            android:key="bicycle_seconds"
+                            android:title="@string/seconds"
+                            android:defaultValue="500"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditSeconds" />
+                    </PreferenceCategory>
+                    <PreferenceCategory
+                        android:title="IN_VEHICLE">
+                        <EditTextPreference
+                            android:key="vehicle_meters"
+                            android:title="@string/meters"
+                            android:defaultValue="1000"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditMeters" />
+                        <EditTextPreference
+                            android:key="vehicle_seconds"
+                            android:title="@string/seconds"
+                            android:defaultValue="500"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditSeconds" />
+                    </PreferenceCategory>
+                    <PreferenceCategory
+                        android:title="RUNNING">
+                        <EditTextPreference
+                            android:key="running_meters"
+                            android:title="@string/meters"
+                            android:defaultValue="100"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditMeters" />
+                        <EditTextPreference
+                            android:key="running_seconds"
+                            android:title="@string/seconds"
+                            android:defaultValue="60"
+                            android:inputType="number"
+                            android:summary="@string/summaryEditSeconds" />
+                    </PreferenceCategory>
+                </PreferenceScreen>
+            <CheckBoxPreference
+                android:key="speed_auto"
+                android:title="Скорость движения" />
+            <PreferenceScreen
+                android:dependency="speed_auto"
+                android:key="speed_auto"
+                android:title="Настройка скорости">
+                <intent
+                    android:targetClass="kspt.revkina.gps.SpeedListActivity"
+                    android:targetPackage="kspt.revkina.gps"/>
+            </PreferenceScreen>
+            <CheckBoxPreference
+                android:key="time_auto"
+                android:title="Интервал времени" />
+            <PreferenceScreen
+                android:dependency="time_auto"
+                android:title="Настройка временного интервала" >
+                <intent
+                    android:targetClass="kspt.revkina.gps.TimeListActivity"
+                    android:targetPackage="kspt.revkina.gps"/>
+            </PreferenceScreen>
+        </PreferenceScreen>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="РАБОТА С БАЗОЙ ДАННЫХ">
+        android:title="@string/titleWorkWithDB">
         <Preference
             android:key="buttonupload"
-            android:title="Выгрузить базу данных"
+            android:title="@string/uploadData"
             android:widgetLayout="@layout/button"
             />
         <Preference
             android:key="buttonclear"
-            android:title="Очистить базу данных"
+            android:title="@string/clearDB"
             android:widgetLayout="@layout/buttonclear"
             />
     </PreferenceCategory>

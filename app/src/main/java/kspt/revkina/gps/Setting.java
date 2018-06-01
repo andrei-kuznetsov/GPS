@@ -2,6 +2,7 @@ package kspt.revkina.gps;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -9,10 +10,10 @@ import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.SwitchPreference;
 import android.view.View;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,84 +22,24 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 
 
 /**
  * Class, settings for working with the database
  */
-public class Setting extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener,
-        View.OnClickListener {
+public class Setting extends PreferenceActivity implements View.OnClickListener {
     SharedPreferences sharedPreferences;
     String nameFile;
+    private LocationService locationService = new LocationService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_general);
-        EditTextPreference metersPref = (EditTextPreference)findPreference( "meters" );
-        metersPref.setOnPreferenceClickListener(
-                new Preference.OnPreferenceClickListener()
-                {
-                    @Override
-                    public boolean onPreferenceClick(Preference preference)
-                    {
-                        EditTextPreference editPref = (EditTextPreference)preference;
-                        editPref.getEditText().setSelection( editPref.getText().length() );
-                        return true;
-                    }
-                } );
-        EditTextPreference secondsPref = (EditTextPreference)findPreference( "seconds" );
-        secondsPref.setOnPreferenceClickListener(
-                new Preference.OnPreferenceClickListener()
-                {
-                    @Override
-                    public boolean onPreferenceClick(Preference preference)
-                    {
-                        EditTextPreference editPref = (EditTextPreference)preference;
-                        editPref.getEditText().setSelection( editPref.getText().length() );
-                        return true;
-                    }
-                } );
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        sharedPreferences = getPreferenceManager().getSharedPreferences();
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-
-        Map<String, ?> preferencesMap = sharedPreferences.getAll();
-
-        for (Map.Entry<String, ?> preferenceEntry : preferencesMap.entrySet()) {
-            if (preferenceEntry instanceof EditTextPreference) {
-                updateSummary((EditTextPreference) preferenceEntry);
-            }
-        }
-    }
-
-    @Override
-    public void onPause() {
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-        super.onPause();
-    }
-
-    private void updateSummary(EditTextPreference preference) {
-        preference.setSummary(preference.getText());
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Map<String, ?> preferencesMap = sharedPreferences.getAll();
-        Object changedPreference = preferencesMap.get(key);
-        if (preferencesMap.get(key) instanceof EditTextPreference) {
-            updateSummary((EditTextPreference) changedPreference);
-        }
-    }
-
 
     @Override
     public void onClick(View v) {
@@ -119,16 +60,26 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
             case R.id.buttonClear:
                 clearDialog();
                 break;
+            case R.id.enter:
+                SwitchPreference enter = (SwitchPreference) findPreference("enter");
+                if (enter.getSwitchTextOn().equals(R.string.summaryOn)) {
+                    locationService.updateLocationRequest(
+                            Long.parseLong(sharedPreferences.getString(getString(R.string.seconds), "120")),
+                            Float.parseFloat(sharedPreferences.getString(getString(R.string.meters), "10")));
+                } else {
+                    startService(new Intent(this, LocationService.class));
+                }
+                break;
         }
     }
 
-    Handler handler = new Handler(){
+    private Handler handler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(Message msg) {
             Bundle bundle = msg.getData();
             String fileName = bundle.getString("fileName");
             AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-            quitDialog.setTitle("Вывели файл");
+            quitDialog.setTitle(R.string.titleExportBD);
             quitDialog.setMessage(fileName);
             quitDialog.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                 @Override
@@ -141,15 +92,15 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
     };
 
     private void clearDialog() {
-        AlertDialog.Builder quitDialog = new AlertDialog.Builder(Setting.this);
-        quitDialog.setMessage("Вы действительно хотите удалить все данные?");
-        quitDialog.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(Setting.this)
+            .setMessage(R.string.messageClearBD)
+            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
-            }
-        });
-        quitDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+              }
+        })
+            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 new Thread(
@@ -161,8 +112,7 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
                         }
                 ).start();
             }
-        });
-        quitDialog.show();
+        }).show();
     }
 
     private void exportTheDB() throws IOException {
@@ -192,19 +142,33 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
 
         Cursor cursor = database.query(DBHelper.TABLE, null, null, null, null, null, DBHelper.KEY_DATE + " DESC");
         writer.println("_ID"+ ";" +"Date"+ ";"+"Latitude"+ ";"+"Longitude" + ";"+"Accuracy"+ ";"+"Provider"+
-                ";"+"BatteryLife");
+                ";"+"BatteryLife"+";"+"Difference");
 
         if (cursor.moveToFirst()) {
             do {
                 String id = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_ID));
-                String data = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_DATE));
+                String idSecond = "";
+                long different = 0;
+                Long dataD = cursor.getLong(cursor.getColumnIndex(DBHelper.KEY_DATE));
+                if (Long.parseLong(id) < dbHelper.countBD()) {
+                    long second = Long.parseLong(id)+1;
+                    idSecond = String.valueOf(second);
+                    Cursor cursor2 = database.rawQuery("select * from " + DBHelper.TABLE + " where " + idSecond + " = " +
+                            DBHelper.KEY_ID, null);
+                    cursor2.moveToFirst();
+                    long dataSecond =  cursor2.getLong(cursor2.getColumnIndex(DBHelper.KEY_DATE));
+                    different = (dataSecond - dataD) / 1000L;
+                }
+
+                Date netDate = (new Date(dataD));
+                String data = sdf.format(netDate);
                 String lat = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_LAT));
                 String lon = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_LON));
                 String acc = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_ACC));
                 String bat = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_BAT));
                 String prov = cursor.getString(cursor.getColumnIndex(DBHelper.KEY_PROV));
 
-                writer.println(id + ";" + data + ";" + lat + ";" + lon + ";" + acc+ ";"+ prov+ ";" + bat);
+                writer.println(id + ";" + data + ";" + lat + ";" + lon + ";" + acc+ ";"+ prov+ ";" + bat +";"+ different);
             } while (cursor.moveToNext());
         }
 
@@ -219,5 +183,4 @@ public class Setting extends PreferenceActivity implements SharedPreferences.OnS
         msg.setData(bundle);
         handler.sendMessage(msg);
     }
-
 }
