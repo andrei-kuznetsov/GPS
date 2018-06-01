@@ -14,18 +14,15 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
-import com.google.android.gms.location.ActivityTransition;
 import com.google.android.gms.location.ActivityTransitionRequest;
-import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -33,8 +30,12 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Service for retrieving data and putting them into a database
@@ -116,11 +117,62 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
+            updateSpeedOrTime(location.getSpeed());
             location.setAccuracy(meters);
             dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                     location.getTime(), location.getProvider(), batteryLevel());
         }
 
+    }
+
+    private void updateSpeedOrTime(Float speed) {
+        if (pref.getBoolean("enter", true)) {
+            SharedPreferences pref = getApplicationContext().getSharedPreferences("list", 0);
+            ArrayList<HashMap<String, String>> mList = new ArrayList<>();
+            ConversionListGson conversionListGson = new ConversionListGson();
+
+            if (pref.getBoolean("speed_auto", false)) {
+                String storedCollection = pref.getString("speed", null);
+
+                if (storedCollection != null) {
+                    mList = conversionListGson.getSpeedList("speed", pref, mList);
+                }
+
+                for (int i=0; i<mList.size(); i++) {
+                    HashMap<String, String> index = mList.get(i);
+                    Float speedFrom = Float.valueOf(index.get("speedFrom"));
+                    Float speedBefore = Float.valueOf(index.get("speedBefore"));
+                    if (speedFrom >= speed && speed <= speedBefore) {
+                        updateLocationRequest(Long.parseLong(index.get("seconds")), Float.parseFloat(index.get("meters")));
+                    }
+                }
+            } else if (pref.getBoolean("time_auto", false)) {
+                String storedCollection = pref.getString("time", null);
+
+                if (storedCollection != null) {
+                    mList = conversionListGson.getSpeedList("time", pref, mList);
+                }
+                String currentTime = DateUtils.formatDateTime(this,
+                        Calendar.getInstance().getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
+
+                for (int i=0; i<mList.size(); i++) {
+                    HashMap<String, String> index = mList.get(i);
+                    String timeFrom = String.valueOf(index.get("timeFrom"));
+                    String timeBefore = String.valueOf(index.get("timeBefore"));
+                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+                    try {
+                        Date time1 = sdf.parse(timeFrom);
+                        Date time2 = sdf.parse(timeBefore);
+                        Date current = sdf.parse(currentTime);
+                        if (current.after(time1) && current.before(time2)) {
+                            updateLocationRequest(Long.parseLong(index.get("seconds")), Float.parseFloat(index.get("meters")));
+                        }
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     protected void updateLocationRequest(long interval, float metersNew) {

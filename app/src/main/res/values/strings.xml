@@ -26,5 +26,6 @@
     <string name="titleSwitchPreference">Настройка</string>
     <string name="summaryEditMeters">Установка точности в метрах</string>
     <string name="summaryEditSeconds">Установка точности получения данных в секундах</string>
+    <string name="title_activity_list">ListActivity</string>
 
 </resources>

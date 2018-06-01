@@ -116,13 +116,22 @@
                 android:title="Скорость движения" />
             <PreferenceScreen
                 android:dependency="speed_auto"
-                android:title="Настройка скорости" />
+                android:key="speed_auto"
+                android:title="Настройка скорости">
+                <intent
+                    android:targetClass="kspt.revkina.gps.SpeedListActivity"
+                    android:targetPackage="kspt.revkina.gps"/>
+            </PreferenceScreen>
             <CheckBoxPreference
                 android:key="time_auto"
                 android:title="Интервал времени" />
             <PreferenceScreen
                 android:dependency="time_auto"
-                android:title="Настройка временного интервала" />
+                android:title="Настройка временного интервала" >
+                <intent
+                    android:targetClass="kspt.revkina.gps.TimeListActivity"
+                    android:targetPackage="kspt.revkina.gps"/>
+            </PreferenceScreen>
         </PreferenceScreen>
     </PreferenceCategory>
     <PreferenceCategory
