@@ -22,26 +22,26 @@ public class TransitionIntentService extends BroadcastReceiver {
                 switch (event.getActivityType()){
                     case DetectedActivity.IN_VEHICLE:
                         locationService.updateLocationRequest(Long.parseLong(pref.getString("vehicle_seconds", "500")),
-                                Float.parseFloat(pref.getString("vehicle_meters", "1000")));
+                                Integer.parseInt(pref.getString("vehicle_meters", "2")));
                         break;
                     case DetectedActivity.ON_BICYCLE:
                         locationService.updateLocationRequest(Long.parseLong(pref.getString("bicycle_seconds", "500")),
-                                Float.parseFloat(pref.getString("bicycle_meters", "500")));
+                                Integer.parseInt(pref.getString("bicycle_meters", "1")));
                         break;
                     case DetectedActivity.STILL:
                         locationService.updateLocationRequest(Long.parseLong(pref.getString("still_seconds", "1000")),
-                                Float.parseFloat(pref.getString("still_meters", "1000")));
+                                Integer.parseInt(pref.getString("still_meters", "2")));
                         break;
                     case DetectedActivity.WALKING:
                         locationService.updateLocationRequest(Long.parseLong(pref.getString("walking_seconds", "120")),
-                                Float.parseFloat(pref.getString("walking_meters", "10")));
+                                Integer.parseInt(pref.getString("walking_meters", "0")));
                         break;
                     case DetectedActivity.RUNNING:
                         locationService.updateLocationRequest(Long.parseLong(pref.getString("running_seconds", "60")),
-                                Float.parseFloat(pref.getString("running_meters", "100")));
+                                Integer.parseInt(pref.getString("running_meters", "0")));
                         break;
                         default:
-                            locationService.updateLocationRequest(120, 10);
+                            locationService.updateLocationRequest(120, 1);
                             break;
                 }
             }

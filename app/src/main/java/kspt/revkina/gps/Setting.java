@@ -12,9 +12,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.SwitchPreference;
 import android.view.View;
+import android.widget.Toast;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,12 +28,13 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.prefs.Preferences;
 
 
 /**
  * Class, settings for working with the database
  */
-public class Setting extends PreferenceActivity implements View.OnClickListener {
+public class Setting extends PreferenceActivity implements View.OnClickListener, Preference.OnPreferenceChangeListener {
     SharedPreferences sharedPreferences;
     String nameFile;
     private LocationService locationService = new LocationService();
@@ -39,6 +44,15 @@ public class Setting extends PreferenceActivity implements View.OnClickListener 
     {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_general);
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object o) {
+        if (preference instanceof ListPreference) {
+            preference.setDefaultValue(o.toString());
+        }
+        return true;
+
     }
 
     @Override
@@ -65,7 +79,7 @@ public class Setting extends PreferenceActivity implements View.OnClickListener 
                 if (enter.getSwitchTextOn().equals(R.string.summaryOn)) {
                     locationService.updateLocationRequest(
                             Long.parseLong(sharedPreferences.getString(getString(R.string.seconds), "120")),
-                            Float.parseFloat(sharedPreferences.getString(getString(R.string.meters), "10")));
+                            Integer.parseInt(sharedPreferences.getString(getString(R.string.meters), "1")));
                 } else {
                     startService(new Intent(this, LocationService.class));
                 }
