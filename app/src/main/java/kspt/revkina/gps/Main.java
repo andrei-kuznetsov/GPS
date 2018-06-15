@@ -21,12 +21,13 @@ public class Main extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ActivityCompat.requestPermissions(this, new String[]{
-                android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION}, 3);
+                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WAKE_LOCK},
+                4);
 
         setContentView(R.layout.first_start);
 
-        ImageView ImageView= (ImageView) findViewById(R.id.ImageView);
+        ImageView ImageView= findViewById(R.id.ImageView);
         ImageView.setImageResource(R.drawable.gps);
     }
 
@@ -49,7 +50,7 @@ public class Main extends Activity {
                         public void onClick(DialogInterface dialogInterface, int i) {
                             ActivityCompat.requestPermissions(Main.this, new String[]{
                                     android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                    android.Manifest.permission.ACCESS_COARSE_LOCATION}, 3);
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WAKE_LOCK}, 4);
                         }
                     })
                     .create()

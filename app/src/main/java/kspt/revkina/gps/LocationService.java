@@ -7,15 +7,19 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.location.Criteria;
+import android.preference.ListPreference;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -44,10 +48,11 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
-    private static final long INTERVAL = 1000 * 60;
-    private static final long FASTEST_INTERVAL = 1000 * 60;
-    private float meters = 10;
+    private static final long INTERVAL = 1000;
+    private static final long FASTEST_INTERVAL = 1000 * 5;
+    private int accuracy = 1;
     SharedPreferences pref;
+    private ListPreference mListPreference;
 
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
@@ -55,15 +60,18 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     private ActivityRecognitionClient activityRecognitionClient;
     private PendingIntent transitionPendingIntent;
+    Criteria criteria;
+    LocationManager locationManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
         dbHelper = new DBHelper(getApplicationContext());
-        pref = PreferenceManager.getDefaultSharedPreferences(this);
-        meters = Float.parseFloat(pref.getString(getString(R.string.meters), "10"));
+        pref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        accuracy = Integer.parseInt(pref.getString("meters", "1"));
         startService(new Intent(this, TransitionIntentService.class));
-
+        locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+        criteria = new Criteria();
         activityRecognitionClient = ActivityRecognition.getClient(getApplicationContext());
         Intent intent = new Intent(getApplicationContext(), TransitionIntentService.class);
         transitionPendingIntent = PendingIntent.getService(getApplicationContext(), 100, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -85,9 +93,12 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                     .addOnConnectionFailedListener(this)
                     .build();
 
+            locationManager.getBestProvider(criteria, true);
             if (!mGoogleApiClient.isConnected() || !mGoogleApiClient.isConnecting()) {
                 mGoogleApiClient.connect();
             }
+        } else {
+            //Warning about connect fail
         }
     }
 
@@ -117,10 +128,22 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
+
+            String provider = locationManager.getBestProvider(criteria, true);
+            Location locationNew = locationManager.getLastKnownLocation(provider);
             updateSpeedOrTime(location.getSpeed());
-            location.setAccuracy(meters);
-            dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
-                    location.getTime(), location.getProvider(), batteryLevel());
+            if (locationNew != null) {
+                if (location.getAccuracy() < locationNew.getAccuracy()) {
+                    dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
+                            location.getTime(), location.getProvider(), batteryLevel());
+                } else {
+                    dbHelper.createNewNote(locationNew.getLatitude(), locationNew.getLongitude(), locationNew.getAccuracy(),
+                            location.getTime(), provider, batteryLevel());
+                }
+            } else {
+                dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
+                        location.getTime(), location.getProvider(), batteryLevel());
+            }
         }
 
     }
@@ -143,7 +166,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                     Float speedFrom = Float.valueOf(index.get("speedFrom"));
                     Float speedBefore = Float.valueOf(index.get("speedBefore"));
                     if (speedFrom >= speed && speed <= speedBefore) {
-                        updateLocationRequest(Long.parseLong(index.get("seconds")), Float.parseFloat(index.get("meters")));
+                        updateLocationRequest(Long.parseLong(index.get("seconds")), Integer.parseInt(index.get("meters")));
                     }
                 }
             } else if (pref.getBoolean("time_auto", false)) {
@@ -165,7 +188,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                         Date time2 = sdf.parse(timeBefore);
                         Date current = sdf.parse(currentTime);
                         if (current.after(time1) && current.before(time2)) {
-                            updateLocationRequest(Long.parseLong(index.get("seconds")), Float.parseFloat(index.get("meters")));
+                            updateLocationRequest(Long.parseLong(index.get("seconds")), Integer.parseInt(index.get("meters")));
                         }
                     } catch (ParseException e) {
                         e.printStackTrace();
@@ -175,9 +198,17 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         }
     }
 
-    protected void updateLocationRequest(long interval, float metersNew) {
+    protected void updateLocationRequest(long interval, int accuracyNew) {
         mLocationRequest.setInterval(interval*INTERVAL);
-        meters = metersNew;
+        accuracy = accuracyNew;
+        switch (accuracy) {
+            case 0:
+                criteria.setAccuracy(Criteria.ACCURACY_HIGH);
+            case 1:
+                criteria.setAccuracy(Criteria.ACCURACY_MEDIUM);
+            case 2:
+                criteria.setAccuracy(Criteria.ACCURACY_LOW);
+        }
     }
 
     /**
@@ -187,7 +218,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(Long.parseLong(pref.getString(getString(R.string.seconds), "120"))*INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
     }
 
     private void startLocationUpdates() {

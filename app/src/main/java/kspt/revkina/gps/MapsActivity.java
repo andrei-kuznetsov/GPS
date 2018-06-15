@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -45,12 +46,18 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
     private DBHelper dbHelper;
     private ImageButton img;
     private UserLocation userLocation;
+    PowerManager.WakeLock wakeLock;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbHelper = new DBHelper(getApplicationContext());
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyWakelockTag");
+        if (wakeLock != null) {
+            wakeLock.acquire();
+        }
         userLocation = new UserLocation();
         setContentView(R.layout.activity_location_google_map);
         Button btnInfo = findViewById(R.id.information);
@@ -93,11 +100,20 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
                             }).show();
                 else
                     Toast.makeText(getApplicationContext(),"Count = "+dbHelper.countBD(), Toast.LENGTH_SHORT).show();
+
                 break;
             case R.id.setting:
                 Intent intent = new Intent(this, Setting.class);
                 startActivity(intent);
                 break;
+        }
+    }
+
+    @Override protected void onDestroy() {
+        super.onDestroy();
+        if (wakeLock != null) {
+            wakeLock.release();
+            wakeLock = null;
         }
     }
 }

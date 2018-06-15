@@ -9,12 +9,15 @@
             android:title="@string/titleSwitchPreference"
             android:summaryOff="@string/summaryOff"
             android:summaryOn="@string/summaryOn" />
-        <EditTextPreference
+        <ListPreference
             android:key="meters"
-            android:title="@string/meters"
-            android:defaultValue="10"
-            android:inputType="number"
-            android:summary="@string/summaryEditMeters"
+            android:title="Погрешность измерений"
+            android:summary="Устанавливает значение погрешности измерений"
+            android:defaultValue = "1"
+            android:persistent="true"
+            android:entries="@array/accuracy"
+            android:entryValues="@array/accuracy_code"
+            android:dialogTitle="Установите значение"
             android:dependency="enter" />
         <EditTextPreference
             android:key="seconds"
@@ -37,12 +40,14 @@
                     android:title="Настройка типов активности">
                     <PreferenceCategory
                         android:title="WALKING">
-                        <EditTextPreference
+                        <ListPreference
                             android:key="walking_meters"
-                            android:title="@string/meters"
-                            android:defaultValue="10"
-                            android:inputType="number"
-                            android:summary="@string/summaryEditMeters" />
+                            android:title="Погрешность измерений"
+                            android:summary="Устанавливает значение погрешности измерений"
+                            android:defaultValue = "0"
+                            android:entries="@array/accuracy"
+                            android:entryValues="@array/accuracy_code"
+                            android:dialogTitle="Установите значение" />
                         <EditTextPreference
                             android:key="walking_seconds"
                             android:title="@string/seconds"
@@ -52,12 +57,14 @@
                     </PreferenceCategory>
                     <PreferenceCategory
                         android:title="STILL">
-                        <EditTextPreference
+                        <ListPreference
                             android:key="still_meters"
-                            android:title="@string/meters"
-                            android:defaultValue="1000"
-                            android:inputType="number"
-                            android:summary="@string/summaryEditMeters" />
+                            android:title="Погрешность измерений"
+                            android:summary="Устанавливает значение погрешности измерений"
+                            android:defaultValue = "2"
+                            android:entries="@array/accuracy"
+                            android:entryValues="@array/accuracy_code"
+                            android:dialogTitle="Установите значение" />
                         <EditTextPreference
                             android:key="still_seconds"
                             android:title="@string/seconds"
@@ -67,12 +74,14 @@
                     </PreferenceCategory>
                     <PreferenceCategory
                         android:title="ON_BICYCLE">
-                        <EditTextPreference
+                        <ListPreference
                             android:key="bicycle_meters"
-                            android:title="@string/meters"
-                            android:defaultValue="500"
-                            android:inputType="number"
-                            android:summary="@string/summaryEditMeters" />
+                            android:title="Погрешность измерений"
+                            android:summary="Устанавливает значение погрешности измерений"
+                            android:defaultValue = "1"
+                            android:entries="@array/accuracy"
+                            android:entryValues="@array/accuracy_code"
+                            android:dialogTitle="Установите значение" />
                         <EditTextPreference
                             android:key="bicycle_seconds"
                             android:title="@string/seconds"
@@ -82,12 +91,14 @@
                     </PreferenceCategory>
                     <PreferenceCategory
                         android:title="IN_VEHICLE">
-                        <EditTextPreference
-                            android:key="vehicle_meters"
-                            android:title="@string/meters"
-                            android:defaultValue="1000"
-                            android:inputType="number"
-                            android:summary="@string/summaryEditMeters" />
+                        <ListPreference
+                            android:key="bicycle_meters"
+                            android:title="Погрешность измерений"
+                            android:summary="Устанавливает значение погрешности измерений"
+                            android:defaultValue = "2"
+                            android:entries="@array/accuracy"
+                            android:entryValues="@array/accuracy_code"
+                            android:dialogTitle="Установите значение" />
                         <EditTextPreference
                             android:key="vehicle_seconds"
                             android:title="@string/seconds"
@@ -97,12 +108,14 @@
                     </PreferenceCategory>
                     <PreferenceCategory
                         android:title="RUNNING">
-                        <EditTextPreference
-                            android:key="running_meters"
-                            android:title="@string/meters"
-                            android:defaultValue="100"
-                            android:inputType="number"
-                            android:summary="@string/summaryEditMeters" />
+                        <ListPreference
+                            android:key="bicycle_meters"
+                            android:title="Погрешность измерений"
+                            android:summary="Устанавливает значение погрешности измерений"
+                            android:defaultValue = "0"
+                            android:entries="@array/accuracy"
+                            android:entryValues="@array/accuracy_code"
+                            android:dialogTitle="Установите значение" />
                         <EditTextPreference
                             android:key="running_seconds"
                             android:title="@string/seconds"
