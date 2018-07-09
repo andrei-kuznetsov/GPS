@@ -10,12 +10,15 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 
 /**
  * Input screen for receiving settings
  */
-public class Main extends Activity {
+public class Main extends AppCompatActivity {
+
+    public static final int REQUEST_CODE = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,12 +26,14 @@ public class Main extends Activity {
         ActivityCompat.requestPermissions(this, new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WAKE_LOCK},
-                4);
+                REQUEST_CODE);
 
         setContentView(R.layout.first_start);
+    }
 
-        ImageView ImageView= findViewById(R.id.ImageView);
-        ImageView.setImageResource(R.drawable.gps);
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
