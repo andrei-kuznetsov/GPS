@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="accuracy">
+        <item>Less than 100 meters</item>
+        <item>100-500 meters</item>
+        <item>More than 500 meters</item>
+    </string-array>
+    <string-array name="accuracy_code">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+</resources>

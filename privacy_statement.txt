@@ -1,0 +1,2 @@
+This application collects location data. This data is only stored on the device itself, and is
+not transferred implicitly or explicitly to any third-party service.

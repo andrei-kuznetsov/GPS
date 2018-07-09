@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Location Maps</string>
+    <string name="app_label">Карта</string>
+
+    <string name="title_activity_maps">Gps</string>
+
+    <string name="meters">метры:</string>
+    <string name="seconds">секунды:</string>
+    <string name="btnViewRoute">Просмотр маршрута</string>
+    <string name="btnSetAccuracy">Точность</string>
+    <string name="uploadData">Выгрузка данных</string>
+    <string name="clearDB">Очищение базы данных</string>
+    <string name="from">от</string>
+    <string name="before">до</string>
+    <string name="show">Показать</string>
+    <string name="change">Изменить</string>
+    <string name="titlefrom">От:</string>
+    <string name="titlebefore">До:</string>
+    <string name="yes">ДА</string>
+
+    <string name="titleAccuracy">ТОЧНОСТЬ</string>
+    <string name="titleWorkWithDB">РАБОТА С БАЗОЙ ДАННЫХ</string>
+    <string name="summaryOff">Автоматическая</string>
+    <string name="summaryOn">Ручная</string>
+    <string name="titleSwitchPreference">Настройка</string>
+    <string name="summaryEditMeters">Установка точности в метрах</string>
+    <string name="summaryEditSeconds">Установка точности получения данных в секундах</string>
+    <string name="title_activity_list">ListActivity</string>
+</resources>
