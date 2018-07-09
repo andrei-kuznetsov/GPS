@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="titlePermission">Location Permission Needed</string>
+    <string name="messagePermission">This app needs the Location permission, please accept to use location functionality</string>
+    <string name="messageEmptyBD">You have not gone on the routes yet!</string>
+    <string name="titleExportBD">Output file</string>
+    <string name="messageClearBD">Are you sure you want to delete all the data?</string>
+</resources>
