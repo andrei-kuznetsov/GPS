@@ -26,4 +26,15 @@
     <string name="summaryEditMeters">Установка точности в метрах</string>
     <string name="summaryEditSeconds">Установка точности получения данных в секундах</string>
     <string name="title_activity_list">ListActivity</string>
+    <string name="ttlAccuracy">Погрешность измерений</string>
+    <string name="ttlAccuracySummary">Устанавливает значение погрешности измерений</string>
+    <string name="ttlSetTheValue">Установите значение</string>
+    <string name="ttlAutomaticModeSettings">Настройка автоматического режима</string>
+    <string name="ttlAutomaticModeSettingsSummary">Установка одно из возможных сценириев</string>
+    <string name="ttlActivityType">Тип активности</string>
+    <string name="ttlActivityTypeSettings">Настройка типов активности</string>
+    <string name="ttlSpeed">Скорость движения</string>
+    <string name="ttlSpeedSettinds">Настройка скорости</string>
+    <string name="ttlTimeInterval">Интервал времени</string>
+    <string name="ttlTimeIntervalSettings">Настройка временного интервала</string>
 </resources>

@@ -11,13 +11,13 @@
             android:summaryOn="@string/summaryOn" />
         <ListPreference
             android:key="meters"
-            android:title="Погрешность измерений"
-            android:summary="Устанавливает значение погрешности измерений"
+            android:title="@string/ttlAccuracy"
+            android:summary="@string/ttlAccuracySummary"
             android:defaultValue = "1"
             android:persistent="true"
             android:entries="@array/accuracy"
             android:entryValues="@array/accuracy_code"
-            android:dialogTitle="Установите значение"
+            android:dialogTitle="@string/ttlSetTheValue"
             android:dependency="enter" />
         <EditTextPreference
             android:key="seconds"
@@ -27,27 +27,27 @@
             android:summary="@string/summaryEditSeconds"
             android:dependency="enter" />
         <PreferenceScreen
-            android:title="Настройка автоматического режима"
-            android:summary="Установка одно из возможных сценириев">
+            android:title="@string/ttlAutomaticModeSettings"
+            android:summary="@string/ttlAutomaticModeSettingsSummary">
 
             <CheckBoxPreference
                 android:key="active_auto"
-                android:title="Тип активности"
+                android:title="@string/ttlActivityType"
                 android:defaultValue="true"/>
                 <PreferenceScreen
                     android:key="switch_enter_screen"
                     android:dependency="active_auto"
-                    android:title="Настройка типов активности">
+                    android:title="@string/ttlActivityTypeSettings">
                     <PreferenceCategory
                         android:title="WALKING">
                         <ListPreference
                             android:key="walking_meters"
-                            android:title="Погрешность измерений"
-                            android:summary="Устанавливает значение погрешности измерений"
+                            android:title="@string/ttlAccuracy"
+                            android:summary="@string/ttlAccuracySummary"
                             android:defaultValue = "0"
                             android:entries="@array/accuracy"
                             android:entryValues="@array/accuracy_code"
-                            android:dialogTitle="Установите значение" />
+                            android:dialogTitle="@string/ttlSetTheValue" />
                         <EditTextPreference
                             android:key="walking_seconds"
                             android:title="@string/seconds"
@@ -59,12 +59,12 @@
                         android:title="STILL">
                         <ListPreference
                             android:key="still_meters"
-                            android:title="Погрешность измерений"
-                            android:summary="Устанавливает значение погрешности измерений"
+                            android:title="@string/ttlAccuracy"
+                            android:summary="@string/ttlAccuracySummary"
                             android:defaultValue = "2"
                             android:entries="@array/accuracy"
                             android:entryValues="@array/accuracy_code"
-                            android:dialogTitle="Установите значение" />
+                            android:dialogTitle="@string/ttlSetTheValue" />
                         <EditTextPreference
                             android:key="still_seconds"
                             android:title="@string/seconds"
@@ -76,12 +76,12 @@
                         android:title="ON_BICYCLE">
                         <ListPreference
                             android:key="bicycle_meters"
-                            android:title="Погрешность измерений"
-                            android:summary="Устанавливает значение погрешности измерений"
+                            android:title="@string/ttlAccuracy"
+                            android:summary="@string/ttlAccuracySummary"
                             android:defaultValue = "1"
                             android:entries="@array/accuracy"
                             android:entryValues="@array/accuracy_code"
-                            android:dialogTitle="Установите значение" />
+                            android:dialogTitle="@string/ttlSetTheValue" />
                         <EditTextPreference
                             android:key="bicycle_seconds"
                             android:title="@string/seconds"
@@ -93,12 +93,12 @@
                         android:title="IN_VEHICLE">
                         <ListPreference
                             android:key="bicycle_meters"
-                            android:title="Погрешность измерений"
-                            android:summary="Устанавливает значение погрешности измерений"
+                            android:title="@string/ttlAccuracy"
+                            android:summary="@string/ttlAccuracySummary"
                             android:defaultValue = "2"
                             android:entries="@array/accuracy"
                             android:entryValues="@array/accuracy_code"
-                            android:dialogTitle="Установите значение" />
+                            android:dialogTitle="@string/ttlSetTheValue" />
                         <EditTextPreference
                             android:key="vehicle_seconds"
                             android:title="@string/seconds"
@@ -110,12 +110,12 @@
                         android:title="RUNNING">
                         <ListPreference
                             android:key="bicycle_meters"
-                            android:title="Погрешность измерений"
-                            android:summary="Устанавливает значение погрешности измерений"
+                            android:title="@string/ttlAccuracy"
+                            android:summary="@string/ttlAccuracySummary"
                             android:defaultValue = "0"
                             android:entries="@array/accuracy"
                             android:entryValues="@array/accuracy_code"
-                            android:dialogTitle="Установите значение" />
+                            android:dialogTitle="@string/ttlSetTheValue" />
                         <EditTextPreference
                             android:key="running_seconds"
                             android:title="@string/seconds"
@@ -126,21 +126,21 @@
                 </PreferenceScreen>
             <CheckBoxPreference
                 android:key="speed_auto"
-                android:title="Скорость движения" />
+                android:title="@string/ttlSpeed" />
             <PreferenceScreen
                 android:dependency="speed_auto"
                 android:key="speed_auto"
-                android:title="Настройка скорости">
+                android:title="@string/ttlSpeedSettinds">
                 <intent
                     android:targetClass="kspt.revkina.gps.SpeedListActivity"
                     android:targetPackage="kspt.revkina.gps"/>
             </PreferenceScreen>
             <CheckBoxPreference
                 android:key="time_auto"
-                android:title="Интервал времени" />
+                android:title="@string/ttlTimeInterval" />
             <PreferenceScreen
                 android:dependency="time_auto"
-                android:title="Настройка временного интервала" >
+                android:title="@string/ttlTimeIntervalSettings" >
                 <intent
                     android:targetClass="kspt.revkina.gps.TimeListActivity"
                     android:targetPackage="kspt.revkina.gps"/>

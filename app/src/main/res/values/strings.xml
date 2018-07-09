@@ -8,7 +8,7 @@
     <string name="seconds">seconds:</string>
     <string name="btnViewRoute">View route</string>
     <string name="btnSetAccuracy">Accuracy</string>
-    <string name="uploadData">Upload data</string>
+    <string name="uploadData">Download data</string>
     <string name="clearDB">Clear data</string>
     <string name="from">from</string>
     <string name="before">before</string>
@@ -27,4 +27,15 @@
     <string name="summaryEditSeconds">Setting accuracy in seconds</string>
 
     <string name="title_activity_list">ListActivity</string>
+    <string name="ttlAccuracy">Accuracy (meters)</string>
+    <string name="ttlAccuracySummary">Desired location accuracy in meters</string>
+    <string name="ttlSetTheValue">Set new value</string>
+    <string name="ttlAutomaticModeSettings">Automatic mode settings</string>
+    <string name="ttlAutomaticModeSettingsSummary">Configure supported automatic scenarios</string>
+    <string name="ttlActivityType">Activity type</string>
+    <string name="ttlActivityTypeSettings">Activity type settings</string>
+    <string name="ttlSpeed">Speed</string>
+    <string name="ttlSpeedSettinds">Speed settings</string>
+    <string name="ttlTimeInterval">Time interval</string>
+    <string name="ttlTimeIntervalSettings">Time interval settings</string>
 </resources>
