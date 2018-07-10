@@ -64,9 +64,17 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
         btnInfo.setOnClickListener(this);
         img = findViewById(R.id.setting);
         img.setOnClickListener(this);
-        SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        fm.getMapAsync(this);
+//        SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+//        fm.getMapAsync(this);
+        startLocationService();
+    }
+
+    private void startLocationService() {
         startService(new Intent(this, LocationService.class));
+    }
+
+    private void stopLocationService() {
+        stopService(new Intent(this, LocationService.class));
     }
 
     @Override
@@ -100,7 +108,12 @@ public class MapsActivity extends FragmentActivity implements OnClickListener,
                             }).show();
                 else
                     Toast.makeText(getApplicationContext(),"Count = "+dbHelper.countBD(), Toast.LENGTH_SHORT).show();
-
+                break;
+            case R.id.start:
+                startLocationService();
+                break;
+            case R.id.stop:
+                stopLocationService();
                 break;
             case R.id.setting:
                 Intent intent = new Intent(this, Setting.class);

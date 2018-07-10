@@ -37,4 +37,6 @@
     <string name="ttlSpeedSettinds">Настройка скорости</string>
     <string name="ttlTimeInterval">Интервал времени</string>
     <string name="ttlTimeIntervalSettings">Настройка временного интервала</string>
+    <string name="start">Старт</string>
+    <string name="stop">Стоп</string>
 </resources>

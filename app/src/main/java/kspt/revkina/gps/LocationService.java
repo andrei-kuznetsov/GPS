@@ -19,6 +19,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -49,6 +50,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     private static final long INTERVAL = 1000;
     private static final long FASTEST_INTERVAL = 1000 * 5;
+    public static final String KEY_SECONDS = "seconds";
     private int accuracy = 1;
     SharedPreferences pref;
     private ListPreference mListPreference;
@@ -78,11 +80,13 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startTracking();
+        if (mGoogleApiClient == null){
+            connectGoogleServices();
+        }
         return START_NOT_STICKY;
     }
 
-    private void startTracking() {
+    private void connectGoogleServices() {
         if ( GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
 
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -92,7 +96,6 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                     .addOnConnectionFailedListener(this)
                     .build();
 
-            locationManager.getBestProvider(criteria, true);
             if (!mGoogleApiClient.isConnected() || !mGoogleApiClient.isConnecting()) {
                 mGoogleApiClient.connect();
             }
@@ -120,7 +123,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        stopLocationUpdates();
+        disconnectGoogleClient();
         stopSelf();
     }
 
@@ -130,6 +133,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
             updateSpeedOrTime(location.getSpeed());
             dbHelper.createNewRecord(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                     location.getTime(), location.getProvider(), batteryLevel());
+            Log.d("location", "received location: " + location);
         }
     }
 
@@ -200,8 +204,8 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
      * use this to get the last updated location.
      */
     private void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(Long.parseLong(pref.getString(getString(R.string.seconds), "120"))*INTERVAL);
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setInterval(Long.parseLong(pref.getString(KEY_SECONDS, "120"))*INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
     }
@@ -220,11 +224,20 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                 requestActivityTransitionUpdates();
             }
         }
+
+        Toast.makeText(this, "Service is started: " + mLocationRequest, Toast.LENGTH_LONG).show();
+    }
+
+    private void disconnectGoogleClient() {
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+        mGoogleApiClient = null;
     }
 
     private void stopLocationUpdates() {
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
     }
 
@@ -242,6 +255,9 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         super.onDestroy();
         dbHelper.close();
         deregisterActivityTransitionUpdates();
+        stopLocationUpdates();
+        disconnectGoogleClient();
+        Toast.makeText(this, "Service is stopeed", Toast.LENGTH_SHORT).show();
     }
 
     private void deregisterActivityTransitionUpdates() {

@@ -38,4 +38,6 @@
     <string name="ttlSpeedSettinds">Speed settings</string>
     <string name="ttlTimeInterval">Time interval</string>
     <string name="ttlTimeIntervalSettings">Time interval settings</string>
+    <string name="start">start</string>
+    <string name="stop">stop</string>
 </resources>
