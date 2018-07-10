@@ -19,7 +19,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.text.format.DateUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -128,24 +127,10 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-
-            String provider = locationManager.getBestProvider(criteria, true);
-            Location locationNew = locationManager.getLastKnownLocation(provider);
             updateSpeedOrTime(location.getSpeed());
-            if (locationNew != null) {
-                if (location.getAccuracy() < locationNew.getAccuracy()) {
-                    dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
-                            location.getTime(), location.getProvider(), batteryLevel());
-                } else {
-                    dbHelper.createNewNote(locationNew.getLatitude(), locationNew.getLongitude(), locationNew.getAccuracy(),
-                            location.getTime(), provider, batteryLevel());
-                }
-            } else {
-                dbHelper.createNewNote(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
-                        location.getTime(), location.getProvider(), batteryLevel());
-            }
+            dbHelper.createNewRecord(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
+                    location.getTime(), location.getProvider(), batteryLevel());
         }
-
     }
 
     private void updateSpeedOrTime(Float speed) {
