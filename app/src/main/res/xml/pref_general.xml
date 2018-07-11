@@ -7,8 +7,9 @@
             android:key="enter"
             android:onClick="onClick"
             android:title="@string/titleSwitchPreference"
-            android:summaryOff="@string/summaryOff"
-            android:summaryOn="@string/summaryOn" />
+            android:summaryOff="@string/automaticMode"
+            android:summaryOn="@string/manualMode"
+            android:defaultValue="true"/>
         <ListPreference
             android:key="meters"
             android:title="@string/ttlAccuracy"
@@ -33,7 +34,7 @@
             <CheckBoxPreference
                 android:key="active_auto"
                 android:title="@string/ttlActivityType"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
                 <PreferenceScreen
                     android:key="switch_enter_screen"
                     android:dependency="active_auto"

@@ -20,8 +20,8 @@
 
     <string name="titleAccuracy">ACCURACY</string>
     <string name="titleWorkWithDB">WORK WITH DATABASE</string>
-    <string name="summaryOff">Automatic</string>
-    <string name="summaryOn">Manual</string>
+    <string name="automaticMode">Automatic</string>
+    <string name="manualMode">Manual</string>
     <string name="titleSwitchPreference">Settings</string>
     <string name="summaryEditMeters">Setting accuracy in meters</string>
     <string name="summaryEditSeconds">Setting accuracy in seconds</string>

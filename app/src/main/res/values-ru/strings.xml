@@ -20,8 +20,8 @@
 
     <string name="titleAccuracy">ТОЧНОСТЬ</string>
     <string name="titleWorkWithDB">РАБОТА С БАЗОЙ ДАННЫХ</string>
-    <string name="summaryOff">Автоматическая</string>
-    <string name="summaryOn">Ручная</string>
+    <string name="automaticMode">Автоматическая</string>
+    <string name="manualMode">Ручная</string>
     <string name="titleSwitchPreference">Настройка</string>
     <string name="summaryEditMeters">Установка точности в метрах</string>
     <string name="summaryEditSeconds">Установка точности получения данных в секундах</string>

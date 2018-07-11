@@ -51,9 +51,15 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     private static final long INTERVAL = 1000;
     private static final long FASTEST_INTERVAL = 1000 * 5;
     public static final String KEY_SECONDS = "seconds";
-    private int accuracy = 1;
+    private static final String KEY_ACCURACY = "meters";
+    private static final int[] PRIORITIES = {
+            LocationRequest.PRIORITY_HIGH_ACCURACY,
+            LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY,
+            LocationRequest.PRIORITY_LOW_POWER,
+            LocationRequest.PRIORITY_NO_POWER
+    };
+
     SharedPreferences pref;
-    private ListPreference mListPreference;
 
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
@@ -61,18 +67,12 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     private ActivityRecognitionClient activityRecognitionClient;
     private PendingIntent transitionPendingIntent;
-    Criteria criteria;
-    LocationManager locationManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
         dbHelper = new DBHelper(getApplicationContext());
         pref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        accuracy = Integer.parseInt(pref.getString("meters", "1"));
-        startService(new Intent(this, TransitionIntentService.class));
-        locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
-        criteria = new Criteria();
         activityRecognitionClient = ActivityRecognition.getClient(getApplicationContext());
         Intent intent = new Intent(getApplicationContext(), TransitionIntentService.class);
         transitionPendingIntent = PendingIntent.getService(getApplicationContext(), 100, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -82,8 +82,11 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (mGoogleApiClient == null){
             connectGoogleServices();
+        } else {
+            createLocationRequest();
+            startLocationUpdates();
         }
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     private void connectGoogleServices() {
@@ -130,7 +133,8 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-            updateSpeedOrTime(location.getSpeed());
+//            FIXME: this does not work
+//            updateSpeedOrTime(location.getSpeed());
             dbHelper.createNewRecord(location.getLatitude(), location.getLongitude(), location.getAccuracy(),
                     location.getTime(), location.getProvider(), batteryLevel());
             Log.d("location", "received location: " + location);
@@ -187,17 +191,9 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         }
     }
 
-    protected void updateLocationRequest(long interval, int accuracyNew) {
-        mLocationRequest.setInterval(interval*INTERVAL);
-        accuracy = accuracyNew;
-        switch (accuracy) {
-            case 0:
-                criteria.setAccuracy(Criteria.ACCURACY_HIGH);
-            case 1:
-                criteria.setAccuracy(Criteria.ACCURACY_MEDIUM);
-            case 2:
-                criteria.setAccuracy(Criteria.ACCURACY_LOW);
-        }
+    protected void updateLocationRequest(long intervalInSec, int priority) {
+        mLocationRequest.setInterval(intervalInSec*INTERVAL);
+        mLocationRequest.setPriority(priority);
     }
 
     /**
@@ -205,9 +201,11 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
      */
     private void createLocationRequest() {
         mLocationRequest = LocationRequest.create();
-        mLocationRequest.setInterval(Long.parseLong(pref.getString(KEY_SECONDS, "120"))*INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        long interval = Long.parseLong(pref.getString(KEY_SECONDS, "120"));
+        int priorityIdx = Integer.parseInt(pref.getString(KEY_ACCURACY, "0"));;
+        int priority = PRIORITIES[priorityIdx];
+        updateLocationRequest(interval, priority);
     }
 
     private void startLocationUpdates() {
