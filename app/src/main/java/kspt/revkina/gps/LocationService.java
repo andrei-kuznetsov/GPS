@@ -1,22 +1,23 @@
 package kspt.revkina.gps;
 
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.location.Criteria;
-import android.preference.ListPreference;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -67,6 +68,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
     private ActivityRecognitionClient activityRecognitionClient;
     private PendingIntent transitionPendingIntent;
+    private NotificationCompat.Builder nfBuilder;
 
     @Override
     public void onCreate() {
@@ -76,21 +78,41 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         activityRecognitionClient = ActivityRecognition.getClient(getApplicationContext());
         Intent intent = new Intent(getApplicationContext(), TransitionIntentService.class);
         transitionPendingIntent = PendingIntent.getService(getApplicationContext(), 100, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        nfBuilder = new NotificationCompat.Builder(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mGoogleApiClient == null){
+        createLocationRequest();
+
+        if (mGoogleApiClient == null) {
             connectGoogleServices();
         } else {
-            createLocationRequest();
             startLocationUpdates();
         }
+
         return START_STICKY;
     }
 
+    /* Used to build and start foreground service. */
+    private void setForeground() {
+        NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
+        bigTextStyle.setBigContentTitle("Location service is running");
+        bigTextStyle.bigText(String.valueOf(mLocationRequest));
+
+        nfBuilder.setStyle(bigTextStyle);
+        nfBuilder.setWhen(System.currentTimeMillis());
+        nfBuilder.setSmallIcon(R.mipmap.gps);
+
+        // Build the notification.
+        Notification notification = nfBuilder.build();
+
+        // Start foreground service.
+        startForeground(1, notification);
+    }
+
     private void connectGoogleServices() {
-        if ( GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
+        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
 
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(LocationServices.API)
@@ -154,7 +176,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                     mList = conversionListGson.getSpeedList("speed", pref, mList);
                 }
 
-                for (int i=0; i<mList.size(); i++) {
+                for (int i = 0; i < mList.size(); i++) {
                     HashMap<String, String> index = mList.get(i);
                     Float speedFrom = Float.valueOf(index.get("speedFrom"));
                     Float speedBefore = Float.valueOf(index.get("speedBefore"));
@@ -171,7 +193,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
                 String currentTime = DateUtils.formatDateTime(this,
                         Calendar.getInstance().getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
 
-                for (int i=0; i<mList.size(); i++) {
+                for (int i = 0; i < mList.size(); i++) {
                     HashMap<String, String> index = mList.get(i);
                     String timeFrom = String.valueOf(index.get("timeFrom"));
                     String timeBefore = String.valueOf(index.get("timeBefore"));
@@ -192,7 +214,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     }
 
     protected void updateLocationRequest(long intervalInSec, int priority) {
-        mLocationRequest.setInterval(intervalInSec*INTERVAL);
+        mLocationRequest.setInterval(intervalInSec * INTERVAL);
         mLocationRequest.setPriority(priority);
     }
 
@@ -203,7 +225,8 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         long interval = Long.parseLong(pref.getString(KEY_SECONDS, "120"));
-        int priorityIdx = Integer.parseInt(pref.getString(KEY_ACCURACY, "0"));;
+        int priorityIdx = Integer.parseInt(pref.getString(KEY_ACCURACY, "0"));
+        ;
         int priority = PRIORITIES[priorityIdx];
         updateLocationRequest(interval, priority);
     }
@@ -224,6 +247,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         }
 
         Toast.makeText(this, "Service is started: " + mLocationRequest, Toast.LENGTH_LONG).show();
+        setForeground();
     }
 
     private void disconnectGoogleClient() {
@@ -240,11 +264,11 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     }
 
     private String batteryLevel() {
-        Intent intent  = this.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        Intent intent = this.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         assert intent != null;
-        int    level   = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-        int    scale   = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
-        int    percent = (level*100)/scale;
+        int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+        int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+        int percent = (level * 100) / scale;
         return String.valueOf(percent) + "%";
     }
 
