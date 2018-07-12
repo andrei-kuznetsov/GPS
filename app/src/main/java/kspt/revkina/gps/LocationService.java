@@ -102,7 +102,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
 
         nfBuilder.setStyle(bigTextStyle);
         nfBuilder.setWhen(System.currentTimeMillis());
-        nfBuilder.setSmallIcon(R.mipmap.gps);
+        nfBuilder.setSmallIcon(R.mipmap.gps_small);
 
         // Build the notification.
         Notification notification = nfBuilder.build();
@@ -225,8 +225,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         long interval = Long.parseLong(pref.getString(KEY_SECONDS, "120"));
-        int priorityIdx = Integer.parseInt(pref.getString(KEY_ACCURACY, "0"));
-        ;
+        int priorityIdx = Integer.parseInt(pref.getString(KEY_ACCURACY, "1"));
         int priority = PRIORITIES[priorityIdx];
         updateLocationRequest(interval, priority);
     }
